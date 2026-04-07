@@ -1,9 +1,9 @@
 # Changelog
 
-All notable changes to EpochQueue are documented here.
+All notable changes to PulseMQ are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-EpochQueue uses [Semantic Versioning](https://semver.org/).
+PulseMQ uses [Semantic Versioning](https://semver.org/).
 
 ---
 
@@ -115,5 +115,5 @@ EpochQueue uses [Semantic Versioning](https://semver.org/).
 
 ---
 
-[Unreleased]: https://github.com/sneh-joshi/epochqueue/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/sneh-joshi/epochqueue/releases/tag/v1.0.0
+[Unreleased]: https://github.com/sneh-joshi/pulsemq/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/sneh-joshi/pulsemq/releases/tag/v1.0.0

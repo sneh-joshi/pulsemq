@@ -1,6 +1,6 @@
 version: "3.9"
 
-# ── EpochQueue single-node deployment ──────────────────────────────────────────
+# ── PulseMQ single-node deployment ──────────────────────────────────────────
 #
 # Usage:
 #   docker compose up -d
@@ -10,17 +10,14 @@ version: "3.9"
 #   Health:     http://localhost:8080/health
 #   Metrics:    http://localhost:9090/metrics
 #
-# To run with auth enabled, set the EPOCHQUEUE_AUTH_API_KEY env var:
-#   EPOCHQUEUE_AUTH_API_KEY=mysecret docker compose up -d
+# To run with auth enabled, set the PULSEMQ_AUTH_API_KEY env var:
+#   PULSEMQ_AUTH_API_KEY=mysecret docker compose up -d
 
 services:
 
-  epochqueue:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    image: epochqueue:latest
-    container_name: epochqueue
+  pulsemq:
+    image: pulsemq/pulsemq:latest
+    container_name: pulsemq
     restart: unless-stopped
 
     ports:
@@ -28,12 +25,12 @@ services:
       - "9090:9090"    # Prometheus metrics
 
     volumes:
-      - epochqueue-data:/data
-      - ./config.yaml:/etc/epochqueue/config.yaml:ro
+      - pulsemq-data:/data
+      - ./config.yaml:/etc/pulsemq/config.yaml:ro
 
     environment:
       # Uncomment and set to enable API-key auth:
-      # EPOCHQUEUE_AUTH_API_KEY: "your-secret-key"
+      # PULSEMQ_AUTH_API_KEY: "your-secret-key"
       TZ: UTC
 
     healthcheck:
@@ -50,18 +47,18 @@ services:
         max-file: "5"
 
   # ── Optional: Prometheus scraper ────────────────────────────────────────────
-  # Uncomment to get a local Prometheus instance that scrapes EpochQueue metrics.
+  # Uncomment to get a local Prometheus instance that scrapes PulseMQ metrics.
   #
   # prometheus:
   #   image: prom/prometheus:latest
-  #   container_name: epochqueue-prometheus
+  #   container_name: pulsemq-prometheus
   #   ports:
   #     - "9091:9090"
   #   volumes:
   #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
   #   depends_on:
-  #     - epochqueue
+  #     - pulsemq
 
 volumes:
-  epochqueue-data:
+  pulsemq-data:
     driver: local

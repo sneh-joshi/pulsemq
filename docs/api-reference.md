@@ -1,4 +1,4 @@
-# EpochQueue HTTP API Reference
+# PulseMQ HTTP API Reference
 
 **Base URL:** `http://<host>:<port>` (default port 8080)
 
@@ -59,14 +59,14 @@ Also available on the dedicated metrics port (default 9090).
 
 | Metric | Labels | Description |
 |--------|--------|-------------|
-| `epochqueue_messages_published_total` | namespace, queue | Messages published |
-| `epochqueue_messages_consumed_total` | namespace, queue | Messages delivered to consumers |
-| `epochqueue_messages_acked_total` | namespace, queue | Messages ACKed |
-| `epochqueue_messages_nacked_total` | namespace, queue | Messages NACKed |
-| `epochqueue_messages_dlq_routed_total` | namespace, queue | Messages routed to DLQ |
-| `epochqueue_http_requests_total` | method, path, status | HTTP requests |
-| `epochqueue_http_request_duration_milliseconds_sum` | method, path | Sum of request durations |
-| `epochqueue_http_request_duration_milliseconds_count` | method, path | Request count |
+| `pulsemq_messages_published_total` | namespace, queue | Messages published |
+| `pulsemq_messages_consumed_total` | namespace, queue | Messages delivered to consumers |
+| `pulsemq_messages_acked_total` | namespace, queue | Messages ACKed |
+| `pulsemq_messages_nacked_total` | namespace, queue | Messages NACKed |
+| `pulsemq_messages_dlq_routed_total` | namespace, queue | Messages routed to DLQ |
+| `pulsemq_http_requests_total` | method, path, status | HTTP requests |
+| `pulsemq_http_request_duration_milliseconds_sum` | method, path | Sum of request durations |
+| `pulsemq_http_request_duration_milliseconds_count` | method, path | Request count |
 
 ---
 
@@ -484,7 +484,7 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/invoices/dlq/repl
 
 ### `POST /namespaces/{ns}/queues/{name}/subscriptions`
 
-Register a webhook. EpochQueue will POST each READY message to the given URL.
+Register a webhook. PulseMQ will POST each READY message to the given URL.
 
 **Request body**
 
@@ -497,16 +497,16 @@ Register a webhook. EpochQueue will POST each READY message to the given URL.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `url` | string | yes | EpochQueue will POST messages here |
+| `url` | string | yes | PulseMQ will POST messages here |
 | `secret` | string | no | HMAC-SHA256 signing secret; leave empty to disable |
 
 **Webhook delivery**
 
-EpochQueue sends:
+PulseMQ sends:
 ```
 POST <url>
 Content-Type: application/json
-X-EpochQueue-Signature: sha256=<hmac-sha256(secret, body)>
+X-PulseMQ-Signature: sha256=<hmac-sha256(secret, body)>
 
 {message object}
 ```

@@ -1,7 +1,7 @@
 // Package dlq provides utilities for inspecting and replaying messages that
 // have been moved to a dead-letter queue.
 //
-// A dead-letter queue (DLQ) in EpochQueue is just a regular Queue whose name
+// A dead-letter queue (DLQ) in PulseMQ is just a regular Queue whose name
 // follows the convention "__dlq__<primaryQueueName>". The Manager wires each
 // primary queue to its DLQ automatically via the onDLQ callback.
 //
@@ -15,7 +15,7 @@ package dlq
 import (
 	"fmt"
 
-	"github.com/sneh-joshi/epochqueue/internal/queue"
+	"github.com/sneh-joshi/pulsemq/internal/queue"
 )
 
 // Manager provides dead-letter queue operations on top of a queue.Manager.

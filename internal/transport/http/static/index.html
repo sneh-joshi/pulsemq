@@ -3,299 +3,466 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EpochQueue Dashboard</title>
+  <title>PulseMQ Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2d3e;
-      --accent: #6c63ff;
-      --accent2: #00d9a3;
-      --text: #e2e4ef;
-      --muted: #6b7280;
-      --danger: #ff4c6a;
-      --warn: #f59e0b;
-      --ok: #10b981;
+      --bg:           #0d0c09;
+      --surface:      #141310;
+      --surface2:     #1c1a16;
+      --border:       #2a2620;
+      --border-faint: #1e1c18;
+      --accent:       #f0a030;
+      --accent-dim:   rgba(240,160,48,.12);
+      --accent-faint: rgba(240,160,48,.05);
+      --text:         #e8e0d0;
+      --muted:        #6b6055;
+      --muted2:       #3a3530;
+      --danger:       #e05050;
+      --danger-dim:   rgba(224,80,80,.12);
+      --warn:         #d4a030;
+      --ok:           #50b870;
+      --ok-dim:       rgba(80,184,112,.12);
+      --sched:        #8888cc;
+      --sched-dim:    rgba(136,136,204,.12);
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-      font-size: 14px;
+      font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+      font-size: 13px;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Topbar ──────────────────────────── */
+    /* ── header ──────────────────────────────────────────── */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 24px;
+      padding: 0 28px;
+      height: 52px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
     }
 
-    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
-    .logo svg { flex-shrink: 0; }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+      color: var(--text);
+    }
+
+    .logo-pulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 7px var(--accent);
+      animation: glow 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes glow {
+      0%,100% { opacity:1; transform:scale(1);   box-shadow: 0 0 7px var(--accent); }
+      50%      { opacity:.5; transform:scale(.6); box-shadow: 0 0 3px var(--accent); }
+    }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      padding: 4px 11px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color .15s, border-color .15s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
 
     .status-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 10px; border-radius: 999px;
-      font-size: 12px; font-weight: 600;
-      background: rgba(16,185,129,.15); color: var(--ok);
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 500;
+      color: var(--ok);
+      letter-spacing: .04em;
     }
-    .status-pill.error { background: rgba(255,76,106,.15); color: var(--danger); }
     .status-pill .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: currentColor; animation: pulse 1.6s infinite;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+      animation: glow 1.8s infinite;
     }
-    @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
+    .status-pill.error { color: var(--danger); }
 
-    /* ── Layout ──────────────────────────── */
-    main { padding: 24px; max-width: 1280px; margin: 0 auto; }
+    /* ── layout ──────────────────────────────────────────── */
+    main { padding: 28px; max-width: 1320px; margin: 0 auto; }
 
-    /* ── Stat cards ──────────────────────── */
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-
-    .card {
-      background: var(--surface);
+    /* ── stat strip ──────────────────────────────────────── */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px 20px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 32px;
     }
-    .card-label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-    .card-value { font-size: 28px; font-weight: 700; line-height: 1; }
-    .card-value.accent  { color: var(--accent2); }
-    .card-value.warn    { color: var(--warn); }
-    .card-value.danger  { color: var(--danger); }
-    .card-value.neutral { color: var(--text); }
 
-    /* ── Section heading ─────────────────── */
-    .section-head {
-      display: flex; align-items: center; justify-content: space-between;
+    .stat-item {
+      padding: 22px 24px 20px;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-item:last-child { border-right: none; }
+
+    /* bottom-edge accent bar that animates in on data update */
+    .stat-item::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .5s ease;
+    }
+    .stat-item.lit::after { transform: scaleX(1); }
+
+    .stat-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .16em; text-transform: uppercase;
+      color: var(--muted);
       margin-bottom: 12px;
     }
-    .section-head h2 { font-size: 15px; font-weight: 600; }
-    .refresh-info { font-size: 12px; color: var(--muted); }
 
-    /* ── Table ───────────────────────────── */
-    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+    .stat-value {
+      font-size: 38px; font-weight: 700; line-height: 1;
+      letter-spacing: -.03em;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .stat-item.--accent .stat-value { color: var(--accent); }
+    .stat-item.--sched  .stat-value { color: var(--sched); }
+    .stat-item.--danger .stat-value { color: var(--danger); }
 
+    .stat-sub { font-size: 10px; color: var(--muted); margin-top: 7px; }
+
+    @keyframes numflash {
+      0%   { color: var(--accent); }
+      100% { color: inherit; }
+    }
+    .flash { animation: numflash .8s ease-out forwards; }
+
+    /* ── section bar ─────────────────────────────────────── */
+    .section-bar {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .section-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn-primary {
+      background: var(--accent); border: none; border-radius: 3px;
+      color: var(--bg); cursor: pointer;
+      font-family: inherit; font-size: 11px; font-weight: 700;
+      letter-spacing: .04em; padding: 5px 14px;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .82; }
+
+    .refresh-note { font-size: 10px; color: var(--muted2); letter-spacing: .02em; }
+
+    /* ── pagination ──────────────────────────────────────── */
+    .pg-btn {
+      background: none; border: 1px solid var(--border); border-radius: 3px;
+      color: var(--muted); cursor: pointer;
+      font-family: inherit; font-size: 11px; padding: 2px 9px;
+      transition: color .15s, border-color .15s;
+    }
+    .pg-btn:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+    .pg-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .pg-label { font-size: 11px; color: var(--muted); }
+
+    /* ── queue table ─────────────────────────────────────── */
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
     table { width: 100%; border-collapse: collapse; }
     thead th {
       background: var(--surface);
-      padding: 10px 14px;
+      padding: 9px 16px;
       text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .07em;
-      text-transform: uppercase;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .16em; text-transform: uppercase;
       color: var(--muted);
       border-bottom: 1px solid var(--border);
     }
+    thead th.num { text-align: right; }
     tbody tr {
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--border-faint);
       transition: background .1s;
     }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: rgba(108,99,255,.06); }
-    tbody td { padding: 11px 14px; }
+    tbody tr:hover { background: var(--accent-faint); }
+    tbody td { padding: 10px 16px; font-size: 12px; }
+    tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
-    .badge {
-      display: inline-block;
-      padding: 2px 8px; border-radius: 999px;
-      font-size: 11px; font-weight: 600;
-    }
-    .badge-ready     { background: rgba(0,217,163,.15); color: var(--accent2); }
-    .badge-inflight  { background: rgba(245,158,11,.15); color: var(--warn); }
-    .badge-scheduled { background: rgba(139,92,246,.15); color: #a78bfa; }
-    .badge-depth     { background: rgba(99,179,237,.15); color: #63b3ed; font-weight:600; }
-    .badge-dlq       { background: rgba(255,76,106,.15); color: var(--danger); }
-    .badge-ok       { background: rgba(16,185,129,.15); color: var(--ok); }
-
-    .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
-
-    .btn-purge {
-      padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-      background: rgba(255,76,106,.1); border: 1px solid rgba(255,76,106,.35);
-      color: var(--danger); cursor: pointer; white-space: nowrap;
-      transition: background .15s, border-color .15s;
-    }
-    .btn-purge:hover  { background: rgba(255,76,106,.22); border-color: var(--danger); }
-    .btn-purge:disabled { opacity: .45; cursor: not-allowed; }
-
-    .btn-delete {
-      padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-      background: rgba(255,76,106,.22); border: 1px solid var(--danger);
-      color: var(--danger); cursor: pointer; white-space: nowrap;
-      transition: background .15s;
-    }
-    .btn-delete:hover  { background: rgba(255,76,106,.4); }
-    .btn-delete:disabled { opacity: .45; cursor: not-allowed; }
-
-    .btn-publish {
-      padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-      background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.4);
-      color: var(--accent); cursor: pointer; white-space: nowrap;
-      transition: background .15s;
-    }
-    .btn-publish:hover { background: rgba(108,99,255,.28); border-color: var(--accent); }
-    .btn-publish:disabled { opacity: .45; cursor: not-allowed; }
-
-    /* ── Namespace group row ─────────────── */
-    .ns-group-row td {
-      background: rgba(108,99,255,.07);
-      border-top: 2px solid rgba(108,99,255,.2);
-      padding: 7px 14px;
-      font-size: 11px; font-weight: 700;
-      letter-spacing: .08em; text-transform: uppercase;
+    /* namespace grouping row */
+    .ns-row td {
+      background: var(--surface);
+      padding: 6px 16px;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .16em; text-transform: uppercase;
       color: var(--accent);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border-faint);
     }
 
-    /* ── Card sub-label ──────────────────── */
-    .card-sub { font-size: 10px; color: var(--muted); margin-bottom: 8px; margin-top: 2px; }
+    .queue-name { font-weight: 600; color: var(--text); }
 
-    /* ── Node info ───────────────────────── */
-    .node-info {
+    /* colored number values — no pill shapes, just text color */
+    .n { font-variant-numeric: tabular-nums; }
+    .n-zero   { color: var(--muted2); }
+    .n-ok     { color: var(--ok); }
+    .n-sched  { color: var(--sched); }
+    .n-warn   { color: var(--warn); }
+    .n-danger { color: var(--danger); }
+    .n-depth  { color: var(--text); font-weight: 600; }
+
+    /* status tags */
+    .tag {
+      display: inline-block;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 2px;
+    }
+    .tag-ok     { background: var(--ok-dim);             color: var(--ok); }
+    .tag-active { background: rgba(212,160,48,.12);       color: var(--warn); }
+    .tag-sched  { background: var(--sched-dim);           color: var(--sched); }
+    .tag-dlq    { background: var(--danger-dim);          color: var(--danger); }
+
+    /* action buttons */
+    .act-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit; font-size: 10px; font-weight: 600;
+      letter-spacing: .04em; padding: 3px 9px;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .act-btn + .act-btn { margin-left: 4px; }
+    .act-btn:hover { color: var(--text); border-color: var(--muted); }
+    .act-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .act-btn.send:hover  { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+    .act-btn.purge:hover { color: var(--warn);   border-color: var(--warn);   background: rgba(212,160,48,.1); }
+    .act-btn.del:hover   { color: var(--danger);  border-color: var(--danger); background: var(--danger-dim); }
+
+    .empty-row { padding: 52px 16px; text-align: center; color: var(--muted); font-size: 12px; }
+
+    /* ── node strip ──────────────────────────────────────── */
+    .node-strip {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
       margin-top: 28px;
     }
-    .node-kv {
+    .node-item { padding: 14px 20px; border-right: 1px solid var(--border); }
+    .node-item:last-child { border-right: none; }
+    .node-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .16em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .node-val { font-size: 12px; color: var(--text); word-break: break-all; }
+
+    /* ── modals ──────────────────────────────────────────── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-box {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex; flex-direction: column; gap: 4px;
+      border-radius: 5px;
+      padding: 28px 32px;
+      min-width: 380px; max-width: 500px; width: 90%;
     }
-    .node-kv-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
-    .node-kv-val   { font-size: 13px; font-family: "JetBrains Mono", "Fira Code", monospace; word-break: break-all; }
+    .modal-box h3 { font-size: 14px; font-weight: 700; letter-spacing: .02em; margin-bottom: 6px; }
+    .modal-sub { font-size: 11px; color: var(--muted); margin-bottom: 22px; line-height: 1.65; }
+    .field-label {
+      display: block;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 5px;
+    }
+    .field-input {
+      width: 100%; padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border); border-radius: 3px;
+      color: var(--text); font-family: inherit; font-size: 12px;
+      outline: none; margin-bottom: 16px;
+      transition: border-color .15s;
+    }
+    .field-input:focus { border-color: var(--accent); }
+    textarea.field-input { resize: vertical; }
+    .field-error { display: none; font-size: 11px; color: var(--danger); margin-bottom: 12px; }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+    .btn-cancel {
+      background: none; border: 1px solid var(--border); border-radius: 3px;
+      color: var(--muted); cursor: pointer;
+      font-family: inherit; font-size: 12px; padding: 7px 18px;
+      transition: color .15s;
+    }
+    .btn-cancel:hover { color: var(--text); }
+    .btn-submit {
+      background: var(--accent); border: none; border-radius: 3px;
+      color: var(--bg); cursor: pointer;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      padding: 7px 18px; transition: opacity .15s;
+    }
+    .btn-submit:hover { opacity: .82; }
+    .btn-submit:disabled { opacity: .4; cursor: not-allowed; }
+
+    @media (max-width: 768px) {
+      .stat-strip { grid-template-columns: repeat(2, 1fr); }
+      main { padding: 16px; }
+    }
   </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="2" y="7" width="20" height="14" rx="2"/>
-      <path d="M16 7V5a2 2 0 0 0-4 0v2"/>
-      <line x1="12" y1="12" x2="12" y2="16"/>
-      <line x1="10" y1="14" x2="14" y2="14"/>
-    </svg>
-    EpochQueue
+    <span class="logo-pulse"></span>
+    PulseMQ
   </div>
-  <div style="display:flex;align-items:center;gap:12px">
-    <a href="/playground" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;border:1px solid var(--accent);padding:4px 10px;border-radius:6px">Playground ↗</a>
-    <button id="settingsBtn" title="API Key Settings" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:5px 8px;font-size:13px">⚙ API Key</button>
-    <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">Connecting…</span></span>
+  <div class="header-right">
+    <a href="/playground" class="btn-ghost">playground ↗</a>
+    <button id="settingsBtn" class="btn-ghost">⚙ api key</button>
+    <div id="statusPill" class="status-pill">
+      <span class="dot"></span><span id="statusText">connecting</span>
+    </div>
   </div>
 </header>
 
-<!-- Create Queue modal -->
-<div id="createModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:102;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 32px;min-width:380px;max-width:460px;width:90%">
-    <h3 style="margin-bottom:6px;font-size:16px">New Queue</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:20px">Creates an empty queue. Messages can be published immediately after.</p>
-    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Namespace</label>
-    <input id="createNs" type="text" placeholder="e.g. payments"
-      style="width:100%;box-sizing:border-box;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;outline:none;margin-bottom:14px">
-    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Queue Name</label>
-    <input id="createName" type="text" placeholder="e.g. orders"
-      style="width:100%;box-sizing:border-box;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;outline:none;margin-bottom:20px">
-    <div id="createError" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px"></div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button id="createCancel" style="padding:8px 18px;background:none;border:1px solid var(--border);border-radius:7px;color:var(--text);cursor:pointer;font-size:13px">Cancel</button>
-      <button id="createSubmit" style="padding:8px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;cursor:pointer;font-size:13px;font-weight:600">Create Queue</button>
+<!-- ── create queue modal ──────────────────────────────────────────────────── -->
+<div id="createModal" class="modal-bg">
+  <div class="modal-box">
+    <h3>new queue</h3>
+    <p class="modal-sub">creates an empty queue. messages can be published immediately after.</p>
+    <label class="field-label">namespace</label>
+    <input id="createNs" class="field-input" type="text" placeholder="e.g. payments">
+    <label class="field-label">queue name</label>
+    <input id="createName" class="field-input" type="text" placeholder="e.g. orders">
+    <div id="createError" class="field-error"></div>
+    <div class="modal-footer">
+      <button id="createCancel" class="btn-cancel">cancel</button>
+      <button id="createSubmit" class="btn-submit">create queue</button>
     </div>
   </div>
 </div>
 
-<!-- Publish Message modal -->
-<div id="publishModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:101;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 32px;min-width:400px;max-width:520px;width:90%">
-    <h3 style="margin-bottom:4px;font-size:16px">Send Message</h3>
-    <p id="publishQueueLabel" style="font-size:12px;color:var(--muted);margin-bottom:18px;font-family:monospace"></p>
-
-    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Body <span style="font-weight:400;text-transform:none">(plain text)</span></label>
-    <textarea id="publishBody" rows="4" placeholder="Hello, world!"
-      style="width:100%;box-sizing:border-box;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;outline:none;resize:vertical;margin-bottom:14px;font-family:inherit"></textarea>
-
-    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Deliver At <span style="font-weight:400;text-transform:none">(optional — leave empty for immediate)</span></label>
-    <input id="publishDeliverAt" type="datetime-local"
-      style="width:100%;box-sizing:border-box;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;outline:none;margin-bottom:14px">
-
-    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Metadata <span style="font-weight:400;text-transform:none">(optional JSON object)</span></label>
-    <textarea id="publishMeta" rows="2" placeholder='{"source": "dashboard"}'
-      style="width:100%;box-sizing:border-box;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;outline:none;resize:vertical;margin-bottom:20px;font-family:monospace"></textarea>
-
-    <div id="publishError" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px"></div>
-
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button id="publishCancel" style="padding:8px 18px;background:none;border:1px solid var(--border);border-radius:7px;color:var(--text);cursor:pointer;font-size:13px">Cancel</button>
-      <button id="publishSend" style="padding:8px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;cursor:pointer;font-size:13px;font-weight:600">Send ↑</button>
+<!-- ── publish modal ───────────────────────────────────────────────────────── -->
+<div id="publishModal" class="modal-bg">
+  <div class="modal-box" style="max-width:540px">
+    <h3>send message</h3>
+    <p id="publishQueueLabel" class="modal-sub"></p>
+    <label class="field-label">body <span style="font-weight:400;text-transform:none">(plain text)</span></label>
+    <textarea id="publishBody" class="field-input" rows="4" placeholder="Hello, world!"></textarea>
+    <label class="field-label">deliver at <span style="font-weight:400;text-transform:none">(optional — leave empty for immediate)</span></label>
+    <input id="publishDeliverAt" class="field-input" type="datetime-local">
+    <label class="field-label">metadata <span style="font-weight:400;text-transform:none">(optional json)</span></label>
+    <textarea id="publishMeta" class="field-input" rows="2" placeholder='{"source": "dashboard"}'></textarea>
+    <div id="publishError" class="field-error"></div>
+    <div class="modal-footer">
+      <button id="publishCancel" class="btn-cancel">cancel</button>
+      <button id="publishSend" class="btn-submit">send ↑</button>
     </div>
   </div>
 </div>
 
-<!-- Settings modal -->
-<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 32px;min-width:360px;max-width:480px;width:90%">
-    <h3 style="margin-bottom:16px;font-size:16px">API Key Settings</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">The key is stored only in your browser's <code style="font-family:monospace">localStorage</code> — never sent as a URL parameter.</p>
-    <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">X-Api-Key</label>
-    <input id="apiKeyInput" type="password" placeholder="Leave empty if auth is disabled"
-      style="width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:14px;outline:none;margin-bottom:20px">
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button id="settingsCancel" style="padding:8px 18px;background:none;border:1px solid var(--border);border-radius:7px;color:var(--text);cursor:pointer;font-size:13px">Cancel</button>
-      <button id="settingsSave" style="padding:8px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;cursor:pointer;font-size:13px;font-weight:600">Save</button>
+<!-- ── settings modal ─────────────────────────────────────────────────────── -->
+<div id="settingsModal" class="modal-bg">
+  <div class="modal-box">
+    <h3>api key settings</h3>
+    <p class="modal-sub">stored only in <code>localStorage</code> — never sent as a url parameter.</p>
+    <label class="field-label">x-api-key</label>
+    <input id="apiKeyInput" class="field-input" type="password" placeholder="leave empty if auth is disabled">
+    <div class="modal-footer">
+      <button id="settingsCancel" class="btn-cancel">cancel</button>
+      <button id="settingsSave" class="btn-submit">save</button>
     </div>
   </div>
 </div>
 
 <main>
 
-  <!-- Summary cards -->
-  <div class="cards" id="cards">
-    <div class="card">
-      <div class="card-label">Total Depth</div>
-      <div class="card-sub">ready + in-flight + scheduled</div>
-      <div class="card-value accent" id="cardDepth">—</div>
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="stat-item --accent" id="siDepth">
+      <div class="stat-label">total depth</div>
+      <div class="stat-value" id="cardDepth">—</div>
+      <div class="stat-sub">ready + in-flight + scheduled</div>
     </div>
-    <div class="card">
-      <div class="card-label">Namespaces</div>
-      <div class="card-sub">unique active namespaces</div>
-      <div class="card-value neutral" id="cardNs">—</div>
+    <div class="stat-item" id="siNs">
+      <div class="stat-label">namespaces</div>
+      <div class="stat-value" id="cardNs">—</div>
+      <div class="stat-sub">active</div>
     </div>
-    <div class="card">
-      <div class="card-label">Scheduled</div>
-      <div class="card-sub">awaiting future delivery</div>
-      <div class="card-value" id="cardSched" style="color:#a78bfa">—</div>
+    <div class="stat-item --sched" id="siSched">
+      <div class="stat-label">scheduled</div>
+      <div class="stat-value" id="cardSched">—</div>
+      <div class="stat-sub">awaiting delivery</div>
     </div>
-    <div class="card">
-      <div class="card-label">DLQ Alerts</div>
-      <div class="card-sub">queues with failed messages</div>
-      <div class="card-value danger" id="cardDlq">—</div>
+    <div class="stat-item --danger" id="siDlq">
+      <div class="stat-label">dlq alerts</div>
+      <div class="stat-value" id="cardDlq">—</div>
+      <div class="stat-sub">failed messages</div>
     </div>
   </div>
 
-  <!-- Queue table -->
-  <div class="section-head">
-    <h2>Queues</h2>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <button id="createQueueBtn" style="padding:5px 14px;border-radius:7px;background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.02em">+ New Queue</button>
-      <div style="display:flex;align-items:center;gap:5px">
-        <button id="pgPrev" style="padding:3px 9px;border-radius:5px;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px" disabled>←</button>
-        <span id="pgInfo" style="font-size:12px;color:var(--muted);white-space:nowrap">—</span>
-        <button id="pgNext" style="padding:3px 9px;border-radius:5px;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px" disabled>→</button>
+  <!-- queues section -->
+  <div class="section-bar">
+    <span class="section-title">queues</span>
+    <div class="section-actions">
+      <button id="createQueueBtn" class="btn-primary">+ new queue</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button id="pgPrev" class="pg-btn" disabled>←</button>
+        <span id="pgInfo" class="pg-label">—</span>
+        <button id="pgNext" class="pg-btn" disabled>→</button>
       </div>
-      <span class="refresh-info" id="lastRefresh">Refreshing every 5 s</span>
+      <span class="refresh-note" id="lastRefresh">—</span>
     </div>
   </div>
 
@@ -303,31 +470,31 @@
     <table>
       <thead>
         <tr>
-          <th>Queue</th>
-          <th>Depth</th>
-          <th>Ready</th>
-          <th>In-Flight</th>
-          <th>Scheduled</th>
-          <th>DLQ Depth</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th>queue</th>
+          <th class="num">depth</th>
+          <th class="num">ready</th>
+          <th class="num">in-flight</th>
+          <th class="num">scheduled</th>
+          <th class="num">dlq</th>
+          <th>status</th>
+          <th>actions</th>
         </tr>
       </thead>
       <tbody id="queueBody">
-        <tr><td colspan="8" class="empty">Loading…</td></tr>
+        <tr><td colspan="8" class="empty-row">loading…</td></tr>
       </tbody>
     </table>
   </div>
 
-  <!-- Node information -->
-  <div class="section-head" style="margin-top:28px">
-    <h2>Node</h2>
+  <!-- node strip -->
+  <div class="section-bar" style="margin-top:28px;margin-bottom:0">
+    <span class="section-title">node</span>
   </div>
-  <div class="node-info" id="nodeInfo">
-    <div class="node-kv"><div class="node-kv-label">Node ID</div><div class="node-kv-val" id="nodeId">—</div></div>
-    <div class="node-kv"><div class="node-kv-label">Version</div><div class="node-kv-val" id="nodeVersion">—</div></div>
-    <div class="node-kv"><div class="node-kv-label">Uptime</div><div class="node-kv-val" id="nodeUptime">—</div></div>
-    <div class="node-kv"><div class="node-kv-label">Data Dir</div><div class="node-kv-val" id="nodeDataDir">—</div></div>
+  <div class="node-strip">
+    <div class="node-item"><div class="node-label">node id</div><div class="node-val" id="nodeId">—</div></div>
+    <div class="node-item"><div class="node-label">version</div><div class="node-val" id="nodeVersion">—</div></div>
+    <div class="node-item"><div class="node-label">uptime</div><div class="node-val" id="nodeUptime">—</div></div>
+    <div class="node-item"><div class="node-label">data dir</div><div class="node-val" id="nodeDataDir">—</div></div>
   </div>
 
 </main>
@@ -335,156 +502,135 @@
 <script>
 (function () {
   "use strict";
-
   const $ = id => document.getElementById(id);
 
-  // ── API key (stored in localStorage, never in the URL) ────────────────────
-
-  function getApiKey() { return localStorage.getItem("epochqueue_api_key") || ""; }
-
+  // ── api key ────────────────────────────────────────────────────────────────
+  function getApiKey() { return localStorage.getItem("pulsemq_api_key") || ""; }
   function buildHeaders() {
     const key = getApiKey();
     return key ? { "X-Api-Key": key } : {};
   }
 
-  // ── Settings modal ─────────────────────────────────────────────────────────
-
-  const modal = $("settingsModal");
+  // ── settings modal ─────────────────────────────────────────────────────────
+  const settingsModal = $("settingsModal");
   $("settingsBtn").addEventListener("click", () => {
     $("apiKeyInput").value = getApiKey();
-    modal.style.display = "flex";
+    settingsModal.style.display = "flex";
   });
-  $("settingsCancel").addEventListener("click", () => { modal.style.display = "none"; });
+  $("settingsCancel").addEventListener("click", () => { settingsModal.style.display = "none"; });
   $("settingsSave").addEventListener("click", () => {
     const key = $("apiKeyInput").value.trim();
-    if (key) localStorage.setItem("epochqueue_api_key", key);
-    else localStorage.removeItem("epochqueue_api_key");
-    modal.style.display = "none";
+    if (key) localStorage.setItem("pulsemq_api_key", key);
+    else localStorage.removeItem("pulsemq_api_key");
+    settingsModal.style.display = "none";
   });
-  modal.addEventListener("click", e => { if (e.target === modal) modal.style.display = "none"; });
-  // ── Create Queue modal ─────────────────────────────────────────────────────
+  settingsModal.addEventListener("click", e => { if (e.target === settingsModal) settingsModal.style.display = "none"; });
 
-  const createModal = $('createModal');
-  $('createQueueBtn').addEventListener('click', () => {
-    $('createNs').value = '';
-    $('createName').value = '';
-    $('createError').style.display = 'none';
-    $('createSubmit').disabled = false;
-    $('createSubmit').textContent = 'Create Queue';
-    $('createSubmit').style.background = '';
-    createModal.style.display = 'flex';
-    setTimeout(() => $('createNs').focus(), 60);
+  // ── create queue modal ─────────────────────────────────────────────────────
+  const createModal = $("createModal");
+  $("createQueueBtn").addEventListener("click", () => {
+    $("createNs").value = ""; $("createName").value = "";
+    $("createError").style.display = "none";
+    $("createSubmit").disabled = false;
+    $("createSubmit").textContent = "create queue";
+    $("createSubmit").style.cssText = "";
+    createModal.style.display = "flex";
+    setTimeout(() => $("createNs").focus(), 60);
   });
-  $('createCancel').addEventListener('click', () => { createModal.style.display = 'none'; });
-  createModal.addEventListener('click', e => { if (e.target === createModal) createModal.style.display = 'none'; });
-  ['createNs','createName'].forEach(id => {
-    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') $('createSubmit').click(); });
-    $(id).addEventListener('input', e => { e.target.value = e.target.value.toLowerCase(); });
+  $("createCancel").addEventListener("click", () => { createModal.style.display = "none"; });
+  createModal.addEventListener("click", e => { if (e.target === createModal) createModal.style.display = "none"; });
+  ["createNs", "createName"].forEach(id => {
+    $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("createSubmit").click(); });
+    $(id).addEventListener("input",   e => { e.target.value = e.target.value.toLowerCase(); });
   });
-  $('createSubmit').addEventListener('click', async () => {
-    const ns   = $('createNs').value.trim().toLowerCase();
-    const name = $('createName').value.trim().toLowerCase();
+  $("createSubmit").addEventListener("click", async () => {
+    const ns   = $("createNs").value.trim().toLowerCase();
+    const name = $("createName").value.trim().toLowerCase();
     if (!ns || !name) {
-      $('createError').textContent = 'Namespace and queue name are required.';
-      $('createError').style.display = 'block';
-      return;
+      $("createError").textContent = "namespace and queue name are required.";
+      $("createError").style.display = "block"; return;
     }
-    $('createSubmit').disabled = true;
-    $('createSubmit').textContent = 'Creating…';
-    $('createError').style.display = 'none';
+    $("createSubmit").disabled = true;
+    $("createSubmit").textContent = "creating…";
+    $("createError").style.display = "none";
     try {
-      await apiFetch(`/namespaces/${encodeURIComponent(ns)}/queues/${encodeURIComponent(name)}`, 'POST', {});
-      $('createSubmit').textContent = '✓ Created';
-      $('createSubmit').style.background = 'var(--ok)';
+      await apiFetch(`/namespaces/${encodeURIComponent(ns)}/queues/${encodeURIComponent(name)}`, "POST", {});
+      $("createSubmit").textContent = "✓ created";
+      $("createSubmit").style.background = "var(--ok)"; $("createSubmit").style.color = "#fff";
       setTimeout(() => {
-        createModal.style.display = 'none';
-        $('createSubmit').disabled = false;
-        $('createSubmit').textContent = 'Create Queue';
-        $('createSubmit').style.background = '';
+        createModal.style.display = "none";
+        $("createSubmit").disabled = false;
+        $("createSubmit").textContent = "create queue";
+        $("createSubmit").style.cssText = "";
         refresh();
       }, 900);
     } catch (err) {
-      $('createError').textContent = 'Error: ' + err.message;
-      $('createError').style.display = 'block';
-      $('createSubmit').disabled = false;
-      $('createSubmit').textContent = 'Create Queue';
+      $("createError").textContent = "error: " + err.message;
+      $("createError").style.display = "block";
+      $("createSubmit").disabled = false; $("createSubmit").textContent = "create queue";
     }
   });
-  // ── Publish modal ─────────────────────────────────────────────────────────
 
-  let _publishNs = '', _publishName = '';
-  const pubModal = $('publishModal');
+  // ── publish modal ──────────────────────────────────────────────────────────
+  let _publishNs = "", _publishName = "";
+  const pubModal = $("publishModal");
 
   function publishToQueue(ns, name) {
-    _publishNs   = ns;
-    _publishName = name;
-    $('publishQueueLabel').textContent = ns + ' / ' + name;
-    $('publishBody').value = '';
-    $('publishDeliverAt').value = '';
-    $('publishMeta').value = '';
-    $('publishError').style.display = 'none';
-    $('publishSend').disabled = false;
-    $('publishSend').textContent = 'Send ↑';
-    pubModal.style.display = 'flex';
-    setTimeout(() => $('publishBody').focus(), 60);
+    _publishNs = ns; _publishName = name;
+    $("publishQueueLabel").textContent = ns + " / " + name;
+    $("publishBody").value = ""; $("publishDeliverAt").value = ""; $("publishMeta").value = "";
+    $("publishError").style.display = "none";
+    $("publishSend").disabled = false; $("publishSend").textContent = "send ↑"; $("publishSend").style.cssText = "";
+    pubModal.style.display = "flex";
+    setTimeout(() => $("publishBody").focus(), 60);
   }
 
-  $('publishCancel').addEventListener('click', () => { pubModal.style.display = 'none'; });
-  pubModal.addEventListener('click', e => { if (e.target === pubModal) pubModal.style.display = 'none'; });
+  $("publishCancel").addEventListener("click", () => { pubModal.style.display = "none"; });
+  pubModal.addEventListener("click", e => { if (e.target === pubModal) pubModal.style.display = "none"; });
 
-  $('publishSend').addEventListener('click', async () => {
-    const body = $('publishBody').value;
+  $("publishSend").addEventListener("click", async () => {
+    const body = $("publishBody").value;
     if (!body.trim()) {
-      $('publishError').textContent = 'Body is required.';
-      $('publishError').style.display = 'block';
-      return;
+      $("publishError").textContent = "body is required.";
+      $("publishError").style.display = "block"; return;
     }
-    const dtVal = $('publishDeliverAt').value;
-    const metaRaw = $('publishMeta').value.trim();
+    const dtVal   = $("publishDeliverAt").value;
+    const metaRaw = $("publishMeta").value.trim();
     let metadata;
     if (metaRaw) {
       try { metadata = JSON.parse(metaRaw); }
       catch {
-        $('publishError').textContent = 'Metadata is not valid JSON.';
-        $('publishError').style.display = 'block';
-        return;
+        $("publishError").textContent = "metadata is not valid json.";
+        $("publishError").style.display = "block"; return;
       }
     }
-    const payload = {
-      body: btoa(unescape(encodeURIComponent(body))), // UTF-8 → base64
-    };
-    if (dtVal) payload.deliver_at = new Date(dtVal).getTime();
-    if (metadata) payload.metadata = metadata;
-
-    $('publishSend').disabled = true;
-    $('publishSend').textContent = 'Sending…';
-    $('publishError').style.display = 'none';
+    const payload = { body: btoa(unescape(encodeURIComponent(body))) };
+    if (dtVal)    payload.deliver_at = new Date(dtVal).getTime();
+    if (metadata) payload.metadata   = metadata;
+    $("publishSend").disabled = true; $("publishSend").textContent = "sending…";
+    $("publishError").style.display = "none";
     try {
       const res = await apiFetch(
         `/namespaces/${encodeURIComponent(_publishNs)}/queues/${encodeURIComponent(_publishName)}/messages`,
-        'POST', payload
+        "POST", payload
       );
-      $('publishSend').textContent = '✓ Sent' + (res && res.id ? ' (' + res.id.slice(-6) + ')' : '');
-      $('publishSend').style.background = 'var(--ok)';
+      $("publishSend").textContent = "✓ sent" + (res && res.id ? " (" + res.id.slice(-6) + ")" : "");
+      $("publishSend").style.background = "var(--ok)"; $("publishSend").style.color = "#fff";
       setTimeout(() => {
-        pubModal.style.display = 'none';
-        $('publishSend').disabled = false;
-        $('publishSend').textContent = 'Send ↑';
-        $('publishSend').style.background = '';
+        pubModal.style.display = "none";
+        $("publishSend").disabled = false; $("publishSend").textContent = "send ↑"; $("publishSend").style.cssText = "";
         refresh();
       }, 1200);
     } catch (err) {
-      $('publishError').textContent = 'Error: ' + err.message;
-      $('publishError').style.display = 'block';
-      $('publishSend').disabled = false;
-      $('publishSend').textContent = 'Send ↑';
+      $("publishError").textContent = "error: " + err.message;
+      $("publishError").style.display = "block";
+      $("publishSend").disabled = false; $("publishSend").textContent = "send ↑";
     }
   });
 
-  // expose for inline onclick
   window._publish = publishToQueue;
-  // ── fetch helpers ─────────────────────────────────────────────────────────
 
+  // ── fetch helpers ──────────────────────────────────────────────────────────
   async function apiFetch(path, method = "GET", body) {
     const opts = { method, headers: buildHeaders() };
     if (body !== undefined) {
@@ -498,125 +644,129 @@
   }
 
   async function deleteQueue(ns, name, btn) {
-    if (!confirm(`Delete queue ${ns}/${name}?\n\nThis permanently removes the queue, all its messages, and its DLQ. This cannot be undone.`)) return;
-    btn.disabled = true;
-    btn.textContent = "Deleting…";
+    if (!confirm(`delete queue ${ns}/${name}?\n\npermanently removes the queue and all its messages. cannot be undone.`)) return;
+    btn.disabled = true; btn.textContent = "deleting…";
     try {
       await apiFetch(`/namespaces/${encodeURIComponent(ns)}/queues/${encodeURIComponent(name)}`, "DELETE");
-      // Remove the row immediately — queue no longer exists.
-      const row = btn.closest("tr");
-      if (row) row.remove();
-      // Refresh to update summary cards.
+      const row = btn.closest("tr"); if (row) row.remove();
       refresh();
     } catch (err) {
-      btn.textContent = "Error";
-      btn.style.color = "var(--danger)";
-      setTimeout(() => { btn.disabled = false; btn.textContent = "✕ Delete"; btn.style.cssText = ""; }, 2200);
-      console.error("delete queue error:", err);
+      btn.textContent = "error"; btn.style.color = "var(--danger)";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "delete"; btn.style.cssText = ""; }, 2200);
     }
   }
 
   async function purgeQueue(ns, name, btn) {
-    if (!confirm(`Purge ALL messages from ${ns}/${name}?\n\nThis removes every READY and IN_FLIGHT message immediately and cannot be undone.`)) return;
-    btn.disabled = true;
-    btn.textContent = "Purging…";
+    if (!confirm(`purge all messages from ${ns}/${name}?\n\nremoves every ready and in-flight message. cannot be undone.`)) return;
+    btn.disabled = true; btn.textContent = "purging…";
     try {
       const data = await apiFetch(`/namespaces/${encodeURIComponent(ns)}/queues/${encodeURIComponent(name)}/messages`, "DELETE");
       const n = data ? (data.purged ?? 0) : 0;
-      btn.textContent = `✓ Purged (${n})`;
-      btn.style.color = "var(--ok)";
-      btn.style.borderColor = "var(--ok)";
-      btn.style.background = "rgba(16,185,129,.1)";
-      setTimeout(() => { btn.disabled = false; btn.textContent = "🗑 Purge"; btn.style.cssText = ""; refresh(); }, 2200);
+      btn.textContent = `✓ ${n} purged`; btn.style.color = "var(--ok)";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "purge"; btn.style.cssText = ""; refresh(); }, 2200);
     } catch (err) {
-      btn.textContent = "Error";
-      btn.style.color = "var(--danger)";
-      setTimeout(() => { btn.disabled = false; btn.textContent = "🗑 Purge"; btn.style.cssText = ""; }, 2200);
-      console.error("purge error:", err);
+      btn.textContent = "error"; btn.style.color = "var(--danger)";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "purge"; btn.style.cssText = ""; }, 2200);
     }
   }
 
-  // ── rendering ─────────────────────────────────────────────────────────────
-
+  // ── rendering ──────────────────────────────────────────────────────────────
   function updateStatus(ok) {
-    const pill = $("statusPill");
-    pill.className = "status-pill" + (ok ? "" : " error");
-    $("statusText").textContent = ok ? "Online" : "Unreachable";
+    const el = $("statusPill");
+    el.className = "status-pill" + (ok ? "" : " error");
+    $("statusText").textContent = ok ? "online" : "unreachable";
   }
 
-  function fmt(n) { return (n == null ? "—" : Number(n).toLocaleString()); }
+  function fmt(n) { return n == null ? "—" : Number(n).toLocaleString(); }
 
-  // ── Summary cards (fed from /api/stats/summary) ──────────────────────────
+  // flash stat values when they change
+  const _prev = {};
+  function maybeFlash(id, val) {
+    const el = $(id);
+    if (_prev[id] !== undefined && _prev[id] !== val) {
+      el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+      const item = el.closest(".stat-item");
+      if (item) { item.classList.add("lit"); setTimeout(() => item.classList.remove("lit"), 2000); }
+    }
+    _prev[id] = val;
+  }
 
   function renderSummary(s) {
     if (!s) return;
-    $("cardDepth").textContent = fmt(s.total_depth);
-    $("cardNs").textContent    = fmt(s.namespaces);
-    $("cardSched").textContent = fmt(s.total_scheduled);
-    $("cardDlq").textContent   = fmt(s.dlq_alerts);
+    const map = {
+      cardDepth: s.total_depth,
+      cardNs:    s.namespaces,
+      cardSched: s.total_scheduled,
+      cardDlq:   s.dlq_alerts,
+    };
+    for (const [id, val] of Object.entries(map)) {
+      $(id).textContent = fmt(val);
+      maybeFlash(id, val);
+    }
   }
 
-  // ── Pagination state ──────────────────────────────────────────────────────
-
+  // ── pagination ─────────────────────────────────────────────────────────────
   let _statsPage = 1;
   const _statsLimit = 50;
   let _statsTotalPages = 1;
 
-  $("pgPrev").addEventListener("click", () => {
-    if (_statsPage > 1) { _statsPage--; refreshTable(); }
-  });
-  $("pgNext").addEventListener("click", () => {
-    if (_statsPage < _statsTotalPages) { _statsPage++; refreshTable(); }
-  });
+  $("pgPrev").addEventListener("click", () => { if (_statsPage > 1) { _statsPage--; refreshTable(); } });
+  $("pgNext").addEventListener("click", () => { if (_statsPage < _statsTotalPages) { _statsPage++; refreshTable(); } });
+
+  function nv(val, cls) {
+    const v = Number(val ?? 0);
+    if (v === 0) return `<span class="n n-zero">0</span>`;
+    return `<span class="n ${cls}">${v.toLocaleString()}</span>`;
+  }
 
   function renderQueues(data) {
     const queues = data ? (data.queues || []) : [];
     _statsTotalPages = data ? (data.total_pages || 1) : 1;
     const total = data ? (data.total || 0) : 0;
 
-    // Pagination controls
-    $("pgInfo").textContent = `Page ${_statsPage} / ${_statsTotalPages} · ${total} queue${total !== 1 ? 's' : ''}`;
+    $("pgInfo").textContent = `${_statsPage}/${_statsTotalPages} · ${total} queue${total !== 1 ? "s" : ""}`;
     $("pgPrev").disabled = _statsPage <= 1;
     $("pgNext").disabled = _statsPage >= _statsTotalPages;
 
     const tbody = $("queueBody");
-    if (!queues || queues.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">No queues yet. Use "+ New Queue" to create one.</td></tr>';
+    if (!queues.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-row">no queues yet — use "+ new queue" to create one</td></tr>';
       return;
     }
 
-    // Group by namespace (server already sorts ns/name)
     const groups = {};
     queues.forEach(q => { (groups[q.namespace] = groups[q.namespace] || []).push(q); });
 
-    let html = '';
+    let html = "";
     Object.keys(groups).sort().forEach(ns => {
       const count = groups[ns].length;
-      html += `<tr class="ns-group-row"><td colspan="8">📁 ${esc(ns)}<span style="font-weight:400;color:var(--muted);margin-left:8px">${count} queue${count !== 1 ? 's' : ''}</span></td></tr>`;
+      html += `<tr class="ns-row"><td colspan="8">${esc(ns)}<span style="font-weight:400;color:var(--muted);font-size:9px;margin-left:8px">${count} queue${count !== 1 ? "s" : ""}</span></td></tr>`;
       groups[ns].forEach(q => {
         const dlq   = q.dlq_depth || 0;
-        const inflt = q.in_flight || 0;
-        const sched = q.scheduled || 0;
+        const inflt = q.in_flight  || 0;
+        const sched = q.scheduled  || 0;
         const depth = q.depth != null ? q.depth : ((q.ready || 0) + inflt + sched);
+
         let status;
-        if (dlq > 0)        status = '<span class="badge badge-dlq">DLQ</span>';
-        else if (sched > 0) status = '<span class="badge badge-scheduled">Scheduled</span>';
-        else if (inflt)     status = '<span class="badge badge-inflight">Active</span>';
-        else                status = '<span class="badge badge-ok">Idle</span>';
-        const purgeId  = `purge-${esc(q.namespace)}-${esc(q.name)}`;
-        const deleteId = `del-${esc(q.namespace)}-${esc(q.name)}`;
+        if (dlq > 0)        status = '<span class="tag tag-dlq">dlq</span>';
+        else if (inflt > 0) status = '<span class="tag tag-active">active</span>';
+        else if (sched > 0) status = '<span class="tag tag-sched">scheduled</span>';
+        else                status = '<span class="tag tag-ok">idle</span>';
+
+        const nDepth = depth > 0 ? `<span class="n n-depth">${depth.toLocaleString()}</span>` : `<span class="n n-zero">0</span>`;
+
         html += `<tr>
-          <td>${esc(q.name)}</td>
-          <td><span class="badge badge-depth">${fmt(depth)}</span></td>
-          <td><span class="badge badge-ready">${fmt(q.ready)}</span></td>
-          <td><span class="badge badge-inflight">${fmt(inflt)}</span></td>
-          <td><span class="badge badge-scheduled">${fmt(sched)}</span></td>
-          <td><span class="badge badge-dlq">${fmt(dlq)}</span></td>
+          <td><span class="queue-name">${esc(q.name)}</span></td>
+          <td class="num">${nDepth}</td>
+          <td class="num">${nv(q.ready, "n-ok")}</td>
+          <td class="num">${nv(inflt, "n-warn")}</td>
+          <td class="num">${nv(sched, "n-sched")}</td>
+          <td class="num">${nv(dlq, "n-danger")}</td>
           <td>${status}</td>
           <td style="white-space:nowrap">
-            <button class="btn-publish" onclick="window._publish('${esc(q.namespace)}','${esc(q.name)}')">↑ Send</button>
-            <button class="btn-purge" id="${purgeId}" onclick="window._purge('${esc(q.namespace)}','${esc(q.name)}',this)" style="margin-left:6px">🗑 Purge</button>
-            <button class="btn-delete" id="${deleteId}" onclick="window._delete('${esc(q.namespace)}','${esc(q.name)}',this)" style="margin-left:6px">✕ Delete</button>
+            <button class="act-btn send"  onclick="window._publish('${esc(q.namespace)}','${esc(q.name)}')">send</button>
+            <button class="act-btn purge" onclick="window._purge('${esc(q.namespace)}','${esc(q.name)}',this)">purge</button>
+            <button class="act-btn del"   onclick="window._delete('${esc(q.namespace)}','${esc(q.name)}',this)">delete</button>
           </td>
         </tr>`;
       });
@@ -627,10 +777,10 @@
   }
 
   function renderHealth(h) {
-    $("nodeId").textContent      = h.node_id      || "—";
-    $("nodeVersion").textContent = h.version      || "—";
+    $("nodeId").textContent      = h.node_id  || "—";
+    $("nodeVersion").textContent = h.version  || "—";
     $("nodeUptime").textContent  = fmtUptime(h.uptime_ms);
-    $("nodeDataDir").textContent = h.data_dir     || "—";
+    $("nodeDataDir").textContent = h.data_dir || "—";
   }
 
   function fmtUptime(ms) {
@@ -642,12 +792,10 @@
 
   function esc(s) {
     return String(s ?? "")
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;");
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
   // ── refresh cycle ──────────────────────────────────────────────────────────
-
   async function refresh() {
     try {
       const [summary, page, health] = await Promise.all([
@@ -659,8 +807,7 @@
       renderSummary(summary);
       renderQueues(page);
       renderHealth(health);
-      const now = new Date();
-      $("lastRefresh").textContent = "Last updated " + now.toLocaleTimeString();
+      $("lastRefresh").textContent = "updated " + new Date().toLocaleTimeString();
     } catch (err) {
       updateStatus(false);
       console.warn("dashboard fetch error:", err);
@@ -669,14 +816,12 @@
 
   async function refreshTable() {
     try {
-      const page = await apiFetch(`/api/stats?page=${_statsPage}&limit=${_statsLimit}`);
-      renderQueues(page);
+      renderQueues(await apiFetch(`/api/stats?page=${_statsPage}&limit=${_statsLimit}`));
     } catch (err) {
       console.warn("table fetch error:", err);
     }
   }
 
-  // kick off immediately, then every 5 s
   refresh();
   setInterval(refresh, 5000);
 })();

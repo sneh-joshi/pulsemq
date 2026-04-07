@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/queue"
-	"github.com/sneh-joshi/epochqueue/internal/scheduler"
-	"github.com/sneh-joshi/epochqueue/internal/storage"
-	"github.com/sneh-joshi/epochqueue/internal/storage/local"
+	"github.com/sneh-joshi/pulsemq/internal/queue"
+	"github.com/sneh-joshi/pulsemq/internal/scheduler"
+	"github.com/sneh-joshi/pulsemq/internal/storage"
+	"github.com/sneh-joshi/pulsemq/internal/storage/local"
 )
 
 // newFactory returns an EngineFactory that stores queue data under baseDir.

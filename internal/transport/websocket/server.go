@@ -1,4 +1,4 @@
-// Package websocket provides WebSocket-based push delivery for EpochQueue.
+// Package websocket provides WebSocket-based push delivery for PulseMQ.
 //
 // Clients open a WebSocket connection to:
 //
@@ -27,7 +27,7 @@ import (
 	"time"
 
 	gorillaws "github.com/gorilla/websocket"
-	"github.com/sneh-joshi/epochqueue/internal/broker"
+	"github.com/sneh-joshi/pulsemq/internal/broker"
 )
 
 // urlParse is an alias so the upgrader closure can call it without shadowing

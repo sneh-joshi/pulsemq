@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EpochQueue — Scheduled & Durable Message Queue (Immediate + Delayed Jobs)</title>
-  <meta name="description" content="EpochQueue is a self-hostable, durable message queue for immediate and delayed jobs. Native scheduled delivery, retries, DLQ, HTTP/WebSocket/Webhook consumers." />
+  <title>PulseMQ — Scheduled & Durable Message Queue (Immediate + Delayed Jobs)</title>
+  <meta name="description" content="PulseMQ is a self-hostable, durable message queue for immediate and delayed jobs. Native scheduled delivery, retries, DLQ, HTTP/WebSocket/Webhook consumers." />
   <meta name="keywords" content="scheduled message queue, delayed job queue, cron replacement, durable message queue, self-hosted queue, golang queue, retry queue, dead letter queue" />
-  <meta property="og:title" content="EpochQueue — Scheduled & Durable Message Queue" />
-  <meta property="og:description" content="One queue for immediate and delayed jobs. Durable storage, native scheduling, retries, and DLQ." />
+  <meta property="og:title" content="PulseMQ — Scheduled & Durable Message Queue" />
+  <meta property="og:description" content="Send it now. Send it later. One queue. Durable message queue with native scheduled delivery. Self-hosted. Zero dependencies." />
   <meta property="og:type" content="website" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
   <style>
     :root {
       --bg:       #0d1117;
@@ -590,6 +590,21 @@
     .pill-go { background: rgba(88,166,255,.12); color: var(--cyan); border: 1px solid rgba(88,166,255,.25); }
     .pill-mit { background: rgba(63,185,80,.1); color: var(--ok); border: 1px solid rgba(63,185,80,.25); }
 
+    /* ─── VS TABLE ─── */
+    .vs-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .vs-table th {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted); font-weight: 600; padding: 12px 16px;
+      text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .vs-table th.hl { color: var(--cyan); }
+    .vs-table td { padding: 12px 16px; border-bottom: 1px solid rgba(48,54,61,.5); font-size: 13px; }
+    .vs-table tr:last-child td { border-bottom: none; }
+    .vs-table tr:hover td { background: rgba(255,255,255,.02); }
+    .vs-table .ok  { color: var(--ok);   font-weight: 600; }
+    .vs-table .no  { color: var(--muted); }
+    .vs-table .par { color: var(--warn); }
+
     @media (max-width: 640px) {
       .nav-links { display: none; }
       footer { flex-direction: column; }
@@ -600,16 +615,16 @@
 
 <!-- ─── NAV ─── -->
 <nav>
-  <a class="nav-logo" href="#">⏱ <span>EpochQueue</span></a>
+  <a class="nav-logo" href="#">⚡ <span>PulseMQ</span></a>
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#quickstart">Quick start</a></li>
     <li><a href="#use-cases">Use cases</a></li>
-    <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/docs/api-reference.md">API Docs</a></li>
+    <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/docs/api-reference.md">API Docs</a></li>
   </ul>
   <div style="display:flex;gap:10px">
-    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/epochqueue">
+    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/pulsemq">
       <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       GitHub
     </a>
@@ -619,13 +634,14 @@
 
 <!-- ─── HERO ─── -->
 <div class="hero">
-  <div class="badge">⏱ Scheduled + immediate message queue</div>
-  <h1>A durable message queue for <span class="gradient">now and later</span></h1>
-  <p>Process immediate workloads and delayed jobs in one system. Built in Go, self-hostable, with native scheduled delivery, retries, and DLQ.</p>
+  <div class="badge">⚡ PulseMQ</div>
+  <h1>Send it now. Send it later. <span class="gradient">One queue.</span></h1>
+  <p>Durable message queue with native scheduled delivery. Self-hosted. Zero dependencies.</p>
   <div class="hero-ctas">
     <a class="btn btn-primary" href="#quickstart">Get started in 60s →</a>
-    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/epochqueue">View on GitHub</a>
+    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/pulsemq">View on GitHub</a>
   </div>
+  <p style="font-size:12px;color:var(--muted);margin-top:14px">v1 · single-node &nbsp;·&nbsp; 3-node Raft cluster support is on the roadmap</p>
 
   <div style="margin: 48px auto 0; max-width: 680px;">
     <div class="code-window">
@@ -649,10 +665,6 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
       <span class="stat-label">scheduled message peek</span>
     </div>
     <div class="stat-item">
-      <span class="stat-value">15k</span>
-      <span class="stat-label">msgs/sec (single node, est.)</span>
-    </div>
-    <div class="stat-item">
       <span class="stat-value">~8 MB</span>
       <span class="stat-label">Docker image</span>
     </div>
@@ -668,11 +680,11 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
 </div>
 <hr class="divider">
 
-<!-- ─── WHY EPOCHQUEUE ─── -->
+<!-- ─── WHY PULSEMQ ─── -->
 <section id="why">
-  <p class="section-label">Why EpochQueue</p>
-  <h2 class="section-title">Traditional scheduling needed workarounds.<br>EpochQueue makes scheduling first-class.</h2>
-  <p class="section-sub">Until now, delayed and time-based workflows usually required multiple moving parts. EpochQueue brings them into one simple queueing model.</p>
+  <p class="section-label">Why PulseMQ</p>
+  <h2 class="section-title">Traditional scheduling needed workarounds.<br>PulseMQ makes scheduling first-class.</h2>
+  <p class="section-sub">Until now, delayed and time-based workflows usually required multiple moving parts. PulseMQ brings them into one simple queueing model.</p>
 
   <div class="compare-grid">
     <div class="compare-card bad">
@@ -687,7 +699,7 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
       </ul>
     </div>
     <div class="compare-card good">
-      <h4>✅ The EpochQueue way</h4>
+      <h4>✅ The PulseMQ way</h4>
       <ul>
         <li>Native <code>deliver_at</code> — any future UTC millisecond</li>
         <li>Configurable scheduling window (default 90 days)</li>
@@ -700,7 +712,7 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
   </div>
 
   <div class="benefits-strip">
-    <h4>Why EpochQueue instead of a separate scheduler service?</h4>
+    <h4>Why PulseMQ instead of a separate scheduler service?</h4>
     <ul>
       <li>One API for immediate and delayed work</li>
       <li>Fewer moving parts to deploy and monitor</li>
@@ -708,6 +720,82 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
       <li>Built-in retry, visibility timeout, and DLQ flow</li>
     </ul>
   </div>
+</section>
+<hr class="divider">
+
+<!-- ─── VS ALTERNATIVES ─── -->
+<section id="vs">
+  <p class="section-label">Alternatives</p>
+  <h2 class="section-title">How PulseMQ compares.</h2>
+  <p class="section-sub">PulseMQ is purpose-built for scheduled and delayed delivery. Here's how it stacks up against common alternatives.</p>
+
+  <div class="table-wrap">
+    <table class="vs-table">
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th class="hl">PulseMQ</th>
+          <th>Redis + BullMQ</th>
+          <th>Sidekiq</th>
+          <th>Temporal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Native ms-precision scheduled delivery</td>
+          <td class="ok">✅ first-class</td>
+          <td class="par">⚠️ delayed jobs (polling)</td>
+          <td class="par">⚠️ scheduled jobs (polling)</td>
+          <td class="ok">✅ workflow timers</td>
+        </tr>
+        <tr>
+          <td>Self-hostable, single binary</td>
+          <td class="ok">✅ ~8 MB, zero deps</td>
+          <td class="par">⚠️ requires Redis</td>
+          <td class="par">⚠️ requires Redis + Ruby</td>
+          <td class="par">⚠️ multi-service cluster</td>
+        </tr>
+        <tr>
+          <td>Clustering</td>
+          <td class="no">❌ v1 single-node<br><span style="font-size:11px">Raft on roadmap</span></td>
+          <td class="ok">✅ Redis Cluster</td>
+          <td class="ok">✅ via Redis</td>
+          <td class="ok">✅ built-in</td>
+        </tr>
+        <tr>
+          <td>Language support</td>
+          <td class="ok">Any (HTTP/WS) + Go SDK</td>
+          <td class="par">JS / TS</td>
+          <td class="par">Ruby</td>
+          <td class="ok">Many official SDKs</td>
+        </tr>
+        <tr>
+          <td>Dead-letter queue</td>
+          <td class="ok">✅ built-in per queue</td>
+          <td class="ok">✅ failed job set</td>
+          <td class="ok">✅ retry + dead set</td>
+          <td class="ok">✅ workflow history</td>
+        </tr>
+        <tr>
+          <td>Operational complexity</td>
+          <td class="ok">Low — one process</td>
+          <td class="par">Medium — Redis + workers</td>
+          <td class="par">Medium — Redis + Sidekiq</td>
+          <td class="no">High — server + workers + DB</td>
+        </tr>
+        <tr>
+          <td>Primary use case</td>
+          <td>Scheduled &amp; delayed job delivery</td>
+          <td>General background jobs (Node)</td>
+          <td>Background jobs (Ruby)</td>
+          <td>Long-running, stateful workflows</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-top:14px">
+    PulseMQ is the right choice when you need precise scheduled delivery with minimal operational overhead and no external dependencies. For complex multi-step orchestration, Temporal may be a better fit.
+  </p>
 </section>
 <hr class="divider">
 
@@ -741,12 +829,13 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
     <div class="feature-card">
       <span class="feature-icon">📦</span>
       <h3>Durable storage</h3>
-      <p>Append-only WAL + bbolt index. Crash-safe: EpochQueue replays the WAL on restart to restore all in-memory state exactly as it was.</p>
+      <p>Append-only WAL + bbolt index. On restart the WAL is replayed to restore all state exactly as it was. Default <code>fsync=interval</code> (1 s) — for zero data loss on a hard crash set <code>fsync=always</code>. <a href="https://github.com/sneh-joshi/pulsemq/blob/main/docs/architecture.md#durability-guarantees">Durability details →</a></p>
     </div>
     <div class="feature-card">
       <span class="feature-icon">📊</span>
       <h3>Built-in dashboard</h3>
       <p>Live queue depths, scheduled counts, DLQ alerts, pagination for 500+ queues. Create queues, send messages, replay DLQ — all from the browser.</p>
+      <img src="screenshot-dashboard.png" alt="PulseMQ dashboard" style="margin-top:14px;width:100%;border-radius:8px;border:1px solid var(--border);display:block" loading="lazy" />
     </div>
     <div class="feature-card">
       <span class="feature-icon">🔭</span>
@@ -760,8 +849,8 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
     </div>
     <div class="feature-card">
       <span class="feature-icon">🚀</span>
-      <h3>Cluster-ready by design</h3>
-      <p>WAL format carries Raft <code>term</code> + <code>log_index</code> fields from day one. Phase 2 adds 3-node Raft consensus without a storage format change.</p>
+      <h3>Single-node v1 · Raft on the roadmap</h3>
+      <p>v1 runs as a single node. 3-node Raft cluster support is on the roadmap — and the WAL format already carries Raft <code>term</code> + <code>log_index</code> fields, so the storage format won't change when clustering ships.</p>
     </div>
   </div>
 </section>
@@ -777,7 +866,7 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
 <section id="how-it-works">
   <p class="section-label">How it works</p>
   <h2 class="section-title">Min-Heap scheduling.<br>O(1) peek. Always.</h2>
-  <p class="section-sub">Traditional solutions poll the database every second. EpochQueue knows exactly when the next message is due and sleeps until that moment.</p>
+  <p class="section-sub">Traditional solutions poll the database every second. PulseMQ knows exactly when the next message is due and sleeps until that moment.</p>
 
   <div class="how-grid">
     <div class="steps">
@@ -812,13 +901,20 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
     </div>
 
     <div>
-      <div class="code-window">
-        <div class="code-title-bar">
-          <div class="dot-row"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
-          <span style="margin-left:8px">Go SDK</span>
-          <span class="pill pill-go" style="margin-left:auto">Go</span>
-        </div>
-        <div class="code-body"><span class="kw">import</span> <span class="str">"github.com/sneh-joshi/epochqueue/pkg/client"</span>
+      <div class="tabs" data-group="sdk">
+        <button class="tab active" data-group="sdk" data-pane="go">Go SDK</button>
+        <button class="tab" data-group="sdk" data-pane="python">Python</button>
+        <button class="tab" data-group="sdk" data-pane="node">Node.js</button>
+      </div>
+
+      <div class="tab-pane active" data-group="sdk" data-pane="go">
+        <div class="code-window">
+          <div class="code-title-bar">
+            <div class="dot-row"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
+            <span style="margin-left:8px">Go SDK</span>
+            <span class="pill pill-go" style="margin-left:auto">Go</span>
+          </div>
+          <div class="code-body"><span class="kw">import</span> <span class="str">"github.com/sneh-joshi/pulsemq/pkg/client"</span>
 
 c := client.New(<span class="str">"http://localhost:8080"</span>)
 
@@ -842,9 +938,83 @@ msgs, _ := c.Consume(ctx, <span class="str">"payments"</span>, <span class="str"
   process(m.Body)
   c.Ack(ctx, m.ReceiptHandle)
 }</div>
+        </div>
+      </div>
+
+      <div class="tab-pane" data-group="sdk" data-pane="python">
+        <div class="code-window">
+          <div class="code-title-bar">
+            <div class="dot-row"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
+            <span style="margin-left:8px">Python (requests)</span>
+            <span class="pill pill-go" style="margin-left:auto;background:rgba(255,212,59,.1);color:#ffd43b;border-color:rgba(255,212,59,.25)">Python</span>
+          </div>
+          <div class="code-body"><span class="kw">import</span> requests, base64, json, time
+
+BASE = <span class="str">"http://localhost:8080"</span>
+body = base64.b64encode(json.dumps({<span class="str">"amount"</span>: <span class="num">42</span>}).encode()).decode()
+
+<span class="cmt"># Publish immediately</span>
+requests.post(<span class="fn">f"{BASE}/namespaces/payments/queues/invoices/messages"</span>,
+              json={<span class="str">"body"</span>: body})
+
+<span class="cmt"># Schedule in 1 hour</span>
+deliver_at = <span class="fn">int(time.time() * 1000)</span> + <span class="num">3_600_000</span>
+requests.post(<span class="fn">f"{BASE}/namespaces/payments/queues/invoices/messages"</span>,
+              json={<span class="str">"body"</span>: body, <span class="str">"deliver_at"</span>: deliver_at})
+
+<span class="cmt"># Consume</span>
+r = requests.get(<span class="fn">f"{BASE}/namespaces/payments/queues/invoices/messages?n=10"</span>)
+<span class="kw">for</span> msg <span class="kw">in</span> r.json()[<span class="str">"messages"</span>]:
+    process(base64.b64decode(msg[<span class="str">"body"</span>]))
+    requests.delete(<span class="fn">f"{BASE}/messages/{msg['receipt_handle']}"</span>)</div>
+        </div>
+      </div>
+
+      <div class="tab-pane" data-group="sdk" data-pane="node">
+        <div class="code-window">
+          <div class="code-title-bar">
+            <div class="dot-row"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
+            <span style="margin-left:8px">Node.js (fetch)</span>
+            <span class="pill pill-go" style="margin-left:auto;background:rgba(63,185,80,.1);color:var(--ok);border-color:rgba(63,185,80,.25)">Node</span>
+          </div>
+          <div class="code-body"><span class="kw">const</span> BASE = <span class="str">"http://localhost:8080"</span>;
+<span class="kw">const</span> body = Buffer.from(JSON.stringify({ amount: <span class="num">42</span> })).toString(<span class="str">"base64"</span>);
+
+<span class="cmt">// Publish immediately</span>
+<span class="kw">await</span> fetch(<span class="fn">`${BASE}/namespaces/payments/queues/invoices/messages`</span>, {
+  method: <span class="str">"POST"</span>, headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> },
+  body: JSON.stringify({ body }),
+});
+
+<span class="cmt">// Schedule in 1 hour</span>
+<span class="kw">await</span> fetch(<span class="fn">`${BASE}/namespaces/payments/queues/invoices/messages`</span>, {
+  method: <span class="str">"POST"</span>, headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> },
+  body: JSON.stringify({ body, deliver_at: Date.now() + <span class="num">3_600_000</span> }),
+});
+
+<span class="cmt">// Consume + ACK</span>
+<span class="kw">const</span> { messages } = <span class="kw">await</span> fetch(
+  <span class="fn">`${BASE}/namespaces/payments/queues/invoices/messages?n=10`</span>
+).then(r => r.json());
+<span class="kw">for</span> (<span class="kw">const</span> msg <span class="kw">of</span> messages) {
+  process(Buffer.from(msg.body, <span class="str">"base64"</span>));
+  <span class="kw">await</span> fetch(<span class="fn">`${BASE}/messages/${msg.receipt_handle}`</span>, { method: <span class="str">"DELETE"</span> });
+}</div>
+        </div>
       </div>
     </div>
   </div>
+</section>
+<hr class="divider">
+
+<!-- ─── DEMO GIF ─── -->
+<section style="text-align:center;padding:60px 5%">
+  <p class="section-label">See it live</p>
+  <h2 class="section-title">Queue depth updating in real time.<br>Scheduled message firing on cue.</h2>
+  <p class="section-sub" style="margin-bottom:32px">Ready count ticks up as messages are published. A scheduled message sits in "Scheduled" until its <code>deliver_at</code> fires — then it flips to "Ready" automatically.</p>
+  <img src="demo.gif" alt="PulseMQ live demo — queue depth updating and scheduled delivery firing"
+       style="max-width:860px;width:100%;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4)"
+       loading="lazy" />
 </section>
 <hr class="divider">
 
@@ -861,8 +1031,8 @@ msgs, _ := c.Consume(ctx, <span class="str">"payments"</span>, <span class="str"
         <div class="qs-body">
           <h4>Clone &amp; start</h4>
           <div class="code-window">
-            <div class="code-body" style="padding:14px 16px;font-size:13px">git clone https://github.com/sneh-joshi/epochqueue
-cd epochqueue/docker
+            <div class="code-body" style="padding:14px 16px;font-size:13px">git clone https://github.com/sneh-joshi/pulsemq
+cd pulsemq/docker
 docker compose up -d</div>
           </div>
         </div>
@@ -895,7 +1065,7 @@ docker compose up -d</div>
         <div class="qs-body">
           <h4>Add the Go SDK</h4>
           <div class="code-window">
-            <div class="code-body" style="padding:14px 16px;font-size:13px">go get github.com/sneh-joshi/epochqueue/pkg/client</div>
+            <div class="code-body" style="padding:14px 16px;font-size:13px">go get github.com/sneh-joshi/pulsemq/pkg/client</div>
           </div>
         </div>
       </div>
@@ -908,8 +1078,8 @@ docker compose up -d</div>
           <span style="margin-left:8px">docker-compose.yml</span>
         </div>
         <div class="code-body"><span class="kw">services</span>:
-  <span class="fn">epochqueue</span>:
-    <span class="type">image</span>: epochqueue:latest  <span class="cmt"># local image until registry release</span>
+  <span class="fn">pulsemq</span>:
+    <span class="type">image</span>: pulsemq:latest  <span class="cmt"># local image until registry release</span>
     <span class="type">ports</span>:
       - <span class="str">"8080:8080"</span>   <span class="cmt"># API + dashboard</span>
       - <span class="str">"9090:9090"</span>   <span class="cmt"># Prometheus metrics</span>
@@ -917,7 +1087,7 @@ docker compose up -d</div>
       - <span class="str">./data:/data</span>
       - <span class="str">./config.yaml:/config.yaml</span>
     <span class="type">environment</span>:
-      - EPOCHQUEUE_AUTH_API_KEY=<span class="str">your-secret</span></div>
+      - PULSEMQ_AUTH_API_KEY=<span class="str">your-secret</span></div>
       </div>
 
       <div style="margin-top:16px" class="code-window">
@@ -925,10 +1095,10 @@ docker compose up -d</div>
           <div class="dot-row"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
           <span style="margin-left:8px">Or build from source</span>
         </div>
-        <div class="code-body">git clone https://github.com/sneh-joshi/epochqueue
-cd epochqueue
-go build -o epochqueue ./cmd/server
-./epochqueue --config config.yaml</div>
+        <div class="code-body">git clone https://github.com/sneh-joshi/pulsemq
+cd pulsemq
+go build -o pulsemq ./cmd/server
+./pulsemq --config config.yaml</div>
       </div>
     </div>
   </div>
@@ -1043,7 +1213,7 @@ go build -o epochqueue ./cmd/server
         <tr>
           <td>Maximum connections</td>
           <td colspan="2" class="ok" style="text-align:center">~65,000 TCP</td>
-          <td class="muted">OS ulimit — not an EpochQueue limit.</td>
+          <td class="muted">OS ulimit — not an PulseMQ limit.</td>
         </tr>
         <tr>
           <td>In-memory index @ 10 GB RAM</td>
@@ -1093,14 +1263,14 @@ go build -o epochqueue ./cmd/server
 <section style="text-align:center;padding:80px 5%">
   <p class="section-label" style="text-align:center">Open source</p>
   <h2 class="section-title" style="max-width:560px;margin:0 auto 14px">MIT licensed. Community driven.</h2>
-  <p class="section-sub" style="margin:0 auto 36px">EpochQueue is fully open source. Contributions, bug reports, and feature discussions are welcome.</p>
+  <p class="section-sub" style="margin:0 auto 36px">PulseMQ is fully open source. Contributions, bug reports, and feature discussions are welcome.</p>
   <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-    <a class="btn btn-primary" href="https://github.com/sneh-joshi/epochqueue">
+    <a class="btn btn-primary" href="https://github.com/sneh-joshi/pulsemq">
       <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       Star on GitHub
     </a>
-    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/epochqueue/blob/main/CONTRIBUTING.md">Contributing Guide</a>
-    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/epochqueue/tree/main/docs">Documentation</a>
+    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/pulsemq/blob/main/CONTRIBUTING.md">Contributing Guide</a>
+    <a class="btn btn-ghost" href="https://github.com/sneh-joshi/pulsemq/tree/main/docs">Documentation</a>
   </div>
   <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
     <span class="pill pill-go">Go 1.24</span>
@@ -1112,38 +1282,38 @@ go build -o epochqueue ./cmd/server
 <hr class="divider">
 <footer>
   <div class="footer-brand">
-    <h3>⏱ EpochQueue</h3>
-    <p>The queue that replaces your cron jobs. Self-hostable. Zero dependencies. Production-ready.</p>
+    <h3>⚡ PulseMQ</h3>
+    <p>Send it now. Send it later. One queue. Self-hostable. Zero dependencies.</p>
   </div>
   <div class="footer-links">
     <h5>Docs</h5>
     <ul>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/docs/getting-started.md">Getting Started</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/docs/api-reference.md">API Reference</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/docs/architecture.md">Architecture</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/CHANGELOG.md">Changelog</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/docs/getting-started.md">Getting Started</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/docs/api-reference.md">API Reference</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/docs/architecture.md">Architecture</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/CHANGELOG.md">Changelog</a></li>
     </ul>
   </div>
   <div class="footer-links">
     <h5>Community</h5>
     <ul>
-      <li><a href="https://github.com/sneh-joshi/epochqueue">GitHub</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/issues">Issues</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/discussions">Discussions</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq">GitHub</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/issues">Issues</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/discussions">Discussions</a></li>
       <li><a href="CONTRIBUTING.md">Contributing</a></li>
     </ul>
   </div>
   <div class="footer-links">
     <h5>Legal</h5>
     <ul>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/LICENSE">MIT License</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
-      <li><a href="https://github.com/sneh-joshi/epochqueue/blob/main/SECURITY.md">Security Policy</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/LICENSE">MIT License</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
+      <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/SECURITY.md">Security Policy</a></li>
     </ul>
   </div>
 </footer>
 <div class="footer-bottom">
-  © 2026 EpochQueue contributors — Released under the MIT License
+  © 2026 PulseMQ contributors — Released under the MIT License
 </div>
 
 <script>

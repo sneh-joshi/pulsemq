@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EpochQueue Playground</title>
+  <title>PulseMQ Playground</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -304,7 +304,7 @@
         <line x1="12" y1="12" x2="12" y2="16"/>
         <line x1="10" y1="14" x2="14" y2="14"/>
       </svg>
-      EpochQueue
+      PulseMQ
     </a>
     <span class="pill">Playground</span>
   </div>
@@ -451,7 +451,7 @@
   const $  = id => document.getElementById(id);
   const qs = sel => document.querySelector(sel);
 
-  function getApiKey() { return localStorage.getItem("epochqueue_api_key") || ""; }
+  function getApiKey() { return localStorage.getItem("pulsemq_api_key") || ""; }
 
   function apiHeaders(extra = {}) {
     const h = { "Content-Type": "application/json", ...extra };
@@ -501,8 +501,8 @@
   $("settingsCancel").addEventListener("click", () => { settingsModal.style.display = "none"; });
   $("settingsSave").addEventListener("click", () => {
     const k = $("apiKeyInput").value.trim();
-    if (k) localStorage.setItem("epochqueue_api_key", k);
-    else localStorage.removeItem("epochqueue_api_key");
+    if (k) localStorage.setItem("pulsemq_api_key", k);
+    else localStorage.removeItem("pulsemq_api_key");
     settingsModal.style.display = "none";
   });
   settingsModal.addEventListener("click", e => {

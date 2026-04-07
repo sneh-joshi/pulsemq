@@ -1,4 +1,4 @@
-module github.com/sneh-joshi/epochqueue
+module github.com/sneh-joshi/pulsemq
 
 go 1.25.0
 

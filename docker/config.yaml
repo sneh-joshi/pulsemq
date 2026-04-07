@@ -1,5 +1,5 @@
-# EpochQueue configuration for Docker deployment.
-# Mount this file to /etc/epochqueue/config.yaml inside the container.
+# PulseMQ configuration for Docker deployment.
+# Mount this file to /etc/pulsemq/config.yaml inside the container.
 
 node:
   id: "auto"

@@ -1,18 +1,21 @@
-# EpochQueue
+# PulseMQ
 
 > **Scheduled & durable message queue for immediate and delayed jobs.**
 
-EpochQueue is a lightweight, self-hostable message queue server for developers who need **regular queueing + time-based delivery** without the operational complexity of heavyweight messaging systems or cloud lock-in.
+PulseMQ is a lightweight, self-hostable message queue server for developers who need **regular queueing + time-based delivery** without the operational complexity of heavyweight messaging systems or cloud lock-in.
 
-[![Go](https://img.shields.io/badge/Go-1.24-blue)](https://golang.org)
+[![Go](https://img.shields.io/badge/Go-1.25-blue)](https://golang.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Website](https://img.shields.io/badge/website-epochqueue.dev-7c5cfc)](https://sneh-joshi.github.io/epochqueue)
+[![Docker](https://img.shields.io/docker/v/pulsemq/pulsemq?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/pulsemq/pulsemq)
+[![Website](https://img.shields.io/badge/website-pulsemq.dev-7c5cfc)](https://sneh-joshi.github.io/pulsemq)
+
+![PulseMQ demo — queue depth updating live and scheduled delivery firing](docs/demo.gif)
 
 ---
 
-## Why EpochQueue?
+## Why PulseMQ?
 
-| Problem | Old Way | With EpochQueue |
+| Problem | Old Way | With PulseMQ |
 |---|---|---|
 | Send email 1 hr after signup | Cron job + DB polling | `Publish(body, WithDelay(time.Hour))` |
 | Retry failed payment after 24 hr | Scheduler service | `Publish(body, WithDelay(24*time.Hour))` |
@@ -28,14 +31,42 @@ EpochQueue is a lightweight, self-hostable message queue server for developers w
 - **Scheduled delivery** — `deliverAt` in any future UTC millisecond, up to 90 days ahead
 - **Three consumer models** — HTTP poll, WebSocket push, Webhook push
 - **Dead-letter queue** — automatic DLQ per queue, manual replay via API
-- **Durable storage** — append-only WAL + bbolt index, survives restarts
+- **Durable storage** — append-only WAL + bbolt index; WAL is replayed on restart to restore all state. Default `fsync=interval` (1 s flush) — use `fsync=always` for zero data loss on hard crash
 - **Visibility timeout + ACK** — at-least-once, exactly-once-friendly delivery
 - **Namespaces** — logical grouping, auto-created on first use
 - **Auth** — static API key (`X-Api-Key` header)
 - **Prometheus metrics** — `/metrics` endpoint on port 9090
 - **Built-in dashboard** — `/dashboard` with live queue depths
+
+![PulseMQ dashboard](docs/screenshot-dashboard.png)
 - **Single binary** — no runtime dependencies, ~8 MB Docker image
 - **Go SDK** — idiomatic client for producers and consumers
+
+---
+
+## Current Status
+
+| Area | Status |
+|---|---|
+| Deployment | Single-node only — 3-node Raft cluster support is on the roadmap |
+| Language SDKs | Go SDK; all other languages use the HTTP/WebSocket API directly |
+| Auth | Static API key (`X-Api-Key`); key rotation requires a server restart |
+
+---
+
+## Alternatives
+
+| Capability | PulseMQ | Redis + BullMQ | Sidekiq | Temporal |
+|---|---|---|---|---|
+| ms-precision scheduled delivery | ✅ first-class | ⚠️ polling | ⚠️ polling | ✅ workflow timers |
+| Self-hostable, single binary | ✅ ~8 MB, zero deps | ⚠️ requires Redis | ⚠️ Redis + Ruby | ⚠️ multi-service |
+| Clustering | ❌ v1 single-node | ✅ Redis Cluster | ✅ via Redis | ✅ built-in |
+| Language support | Any (HTTP/WS) + Go SDK | JS / TS | Ruby | Many |
+| Dead-letter queue | ✅ built-in | ✅ | ✅ | ✅ |
+| Operational complexity | Low | Medium | Medium | High |
+| Primary use case | Scheduled & delayed jobs | General tasks (Node) | Background jobs (Ruby) | Stateful workflows |
+
+> PulseMQ is purpose-built for scheduled and delayed job delivery with minimal operational overhead. For complex multi-step orchestration, Temporal may be a better fit.
 
 ---
 
@@ -44,8 +75,8 @@ EpochQueue is a lightweight, self-hostable message queue server for developers w
 ### Docker Compose (recommended)
 
 ```bash
-git clone https://github.com/sneh-joshi/epochqueue
-cd epochqueue/docker
+git clone https://github.com/sneh-joshi/pulsemq
+cd pulsemq/docker
 docker compose up -d
 ```
 
@@ -54,8 +85,8 @@ Open your browser at http://localhost:8080/dashboard.
 ### Binary
 
 ```bash
-go build -o epochqueue ./cmd/server
-./epochqueue --config config.yaml
+go build -o pulsemq ./cmd/server
+./pulsemq --config config.yaml
 ```
 
 ### Docker (single container)
@@ -63,8 +94,10 @@ go build -o epochqueue ./cmd/server
 ```bash
 docker run -p 8080:8080 -p 9090:9090 \
   -v $(pwd)/data:/data \
-  epochqueue/epochqueue:latest
+  pulsemq/pulsemq:latest
 ```
+
+Image is published on Docker Hub: [`pulsemq/pulsemq`](https://hub.docker.com/r/pulsemq/pulsemq) — supports `linux/amd64` and `linux/arm64`.
 
 ---
 
@@ -98,7 +131,7 @@ curl -s -X POST "$BASE/messages/<receipt_handle>/nack"
 ## Go SDK
 
 ```go
-import "github.com/sneh-joshi/epochqueue/pkg/client"
+import "github.com/sneh-joshi/pulsemq/pkg/client"
 
 c := client.New("http://localhost:8080",
     client.WithAPIKey("your-secret"),  // omit when auth is disabled
@@ -213,14 +246,14 @@ See [config.yaml](config.yaml) for the full reference with all defaults.
 ### Prometheus metrics
 
 ```
-epochqueue_messages_published_total{namespace,queue}
-epochqueue_messages_consumed_total{namespace,queue}
-epochqueue_messages_acked_total{namespace,queue}
-epochqueue_messages_nacked_total{namespace,queue}
-epochqueue_messages_dlq_routed_total{namespace,queue}
-epochqueue_http_requests_total{method,path,status}
-epochqueue_http_request_duration_milliseconds_sum{method,path}
-epochqueue_http_request_duration_milliseconds_count{method,path}
+pulsemq_messages_published_total{namespace,queue}
+pulsemq_messages_consumed_total{namespace,queue}
+pulsemq_messages_acked_total{namespace,queue}
+pulsemq_messages_nacked_total{namespace,queue}
+pulsemq_messages_dlq_routed_total{namespace,queue}
+pulsemq_http_requests_total{method,path,status}
+pulsemq_http_request_duration_milliseconds_sum{method,path}
+pulsemq_http_request_duration_milliseconds_count{method,path}
 ```
 
 ---
@@ -259,7 +292,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 ## Project structure
 
 ```
-epochqueue/
+pulsemq/
 ├── cmd/server/          — server entry point
 ├── pkg/client/          — public Go SDK
 ├── internal/

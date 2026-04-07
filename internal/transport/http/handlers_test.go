@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sneh-joshi/epochqueue/internal/broker"
-	"github.com/sneh-joshi/epochqueue/internal/config"
-	"github.com/sneh-joshi/epochqueue/internal/consumer"
-	transphttp "github.com/sneh-joshi/epochqueue/internal/transport/http"
+	"github.com/sneh-joshi/pulsemq/internal/broker"
+	"github.com/sneh-joshi/pulsemq/internal/config"
+	"github.com/sneh-joshi/pulsemq/internal/consumer"
+	transphttp "github.com/sneh-joshi/pulsemq/internal/transport/http"
 )
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

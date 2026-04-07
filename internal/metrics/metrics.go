@@ -1,5 +1,5 @@
 // Package metrics provides a lightweight Prometheus-compatible metrics
-// registry for EpochQueue. It deliberately avoids the prometheus/client_golang
+// registry for PulseMQ. It deliberately avoids the prometheus/client_golang
 // package so the server binary stays small with no additional dependencies.
 //
 // # Counter naming convention
@@ -54,7 +54,7 @@ func (lc *labelCounter) Each(fn func(key string, val int64)) {
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
-// Registry holds all EpochQueue application metrics.
+// Registry holds all PulseMQ application metrics.
 type Registry struct {
 	// Message-level counters.  key = "namespace\tqueue"
 	Published labelCounter
@@ -81,7 +81,7 @@ func (r *Registry) Handler() http.Handler {
 		var b strings.Builder
 
 		// ── message counters ──────────────────────────────────────────────────
-		writeFamily(&b, "epochqueue_messages_published_total",
+		writeFamily(&b, "pulsemq_messages_published_total",
 			"Total messages published", "counter",
 			func(fn func(labels, val string)) {
 				r.Published.Each(func(key string, val int64) {
@@ -91,7 +91,7 @@ func (r *Registry) Handler() http.Handler {
 				})
 			})
 
-		writeFamily(&b, "epochqueue_messages_consumed_total",
+		writeFamily(&b, "pulsemq_messages_consumed_total",
 			"Total messages delivered to consumers", "counter",
 			func(fn func(labels, val string)) {
 				r.Consumed.Each(func(key string, val int64) {
@@ -101,7 +101,7 @@ func (r *Registry) Handler() http.Handler {
 				})
 			})
 
-		writeFamily(&b, "epochqueue_messages_acked_total",
+		writeFamily(&b, "pulsemq_messages_acked_total",
 			"Total messages acknowledged by consumers", "counter",
 			func(fn func(labels, val string)) {
 				r.Acked.Each(func(key string, val int64) {
@@ -111,7 +111,7 @@ func (r *Registry) Handler() http.Handler {
 				})
 			})
 
-		writeFamily(&b, "epochqueue_messages_nacked_total",
+		writeFamily(&b, "pulsemq_messages_nacked_total",
 			"Total messages negatively acknowledged (requeued or DLQ'd)", "counter",
 			func(fn func(labels, val string)) {
 				r.Nacked.Each(func(key string, val int64) {
@@ -121,7 +121,7 @@ func (r *Registry) Handler() http.Handler {
 				})
 			})
 
-		writeFamily(&b, "epochqueue_messages_dlq_routed_total",
+		writeFamily(&b, "pulsemq_messages_dlq_routed_total",
 			"Total messages routed to a dead-letter queue", "counter",
 			func(fn func(labels, val string)) {
 				r.DLQRouted.Each(func(key string, val int64) {
@@ -132,7 +132,7 @@ func (r *Registry) Handler() http.Handler {
 			})
 
 		// ── HTTP counters ─────────────────────────────────────────────────────
-		writeFamily(&b, "epochqueue_http_requests_total",
+		writeFamily(&b, "pulsemq_http_requests_total",
 			"Total HTTP requests by method, path, and status code", "counter",
 			func(fn func(labels, val string)) {
 				r.HTTPReqs.Each(func(key string, val int64) {
@@ -142,7 +142,7 @@ func (r *Registry) Handler() http.Handler {
 				})
 			})
 
-		writeFamily(&b, "epochqueue_http_request_duration_milliseconds_sum",
+		writeFamily(&b, "pulsemq_http_request_duration_milliseconds_sum",
 			"Sum of HTTP request durations in milliseconds", "counter",
 			func(fn func(labels, val string)) {
 				r.HTTPDurMs.Each(func(key string, val int64) {
@@ -152,7 +152,7 @@ func (r *Registry) Handler() http.Handler {
 				})
 			})
 
-		writeFamily(&b, "epochqueue_http_request_duration_milliseconds_count",
+		writeFamily(&b, "pulsemq_http_request_duration_milliseconds_count",
 			"Count of observed HTTP request durations", "counter",
 			func(fn func(labels, val string)) {
 				r.HTTPDurCnt.Each(func(key string, val int64) {

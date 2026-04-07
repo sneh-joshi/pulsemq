@@ -1,4 +1,4 @@
-// Package http provides the HTTP transport layer for EpochQueue.
+// Package http provides the HTTP transport layer for PulseMQ.
 //
 // Routes (Go 1.22+ method-qualified patterns):
 //
@@ -30,12 +30,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/broker"
-	"github.com/sneh-joshi/epochqueue/internal/config"
-	"github.com/sneh-joshi/epochqueue/internal/consumer"
-	"github.com/sneh-joshi/epochqueue/internal/metrics"
-	"github.com/sneh-joshi/epochqueue/internal/namespace"
-	transportws "github.com/sneh-joshi/epochqueue/internal/transport/websocket"
+	"github.com/sneh-joshi/pulsemq/internal/broker"
+	"github.com/sneh-joshi/pulsemq/internal/config"
+	"github.com/sneh-joshi/pulsemq/internal/consumer"
+	"github.com/sneh-joshi/pulsemq/internal/metrics"
+	"github.com/sneh-joshi/pulsemq/internal/namespace"
+	transportws "github.com/sneh-joshi/pulsemq/internal/transport/websocket"
 )
 
 //go:embed static/index.html
@@ -44,7 +44,7 @@ var dashboardHTML []byte
 //go:embed static/playground.html
 var playgroundHTML []byte
 
-// Server wraps the stdlib HTTP server with EpochQueue route wiring.
+// Server wraps the stdlib HTTP server with PulseMQ route wiring.
 type Server struct {
 	inner *http.Server
 }

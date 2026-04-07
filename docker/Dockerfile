@@ -1,5 +1,5 @@
 # ── Stage 1: build ────────────────────────────────────────────────────────────
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates tzdata
 
@@ -14,7 +14,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w -extldflags=-static" \
     -trimpath \
-    -o /out/liteq \
+    -o /out/pulsemq \
     ./cmd/server
 
 # ── Stage 2: minimal runtime image ───────────────────────────────────────────
@@ -25,7 +25,7 @@ COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy the binary.
-COPY --from=builder /out/liteq /liteq
+COPY --from=builder /out/pulsemq /pulsemq
 
 # Data volume: queue storage + node identity are persisted here.
 VOLUME ["/data"]
@@ -35,5 +35,5 @@ EXPOSE 8080
 # Prometheus metrics port.
 EXPOSE 9090
 
-ENTRYPOINT ["/liteq"]
-CMD ["--config", "/etc/liteq/config.yaml"]
+ENTRYPOINT ["/pulsemq"]
+CMD ["--config", "/etc/pulsemq/config.yaml"]

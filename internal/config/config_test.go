@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sneh-joshi/epochqueue/internal/config"
+	"github.com/sneh-joshi/pulsemq/internal/config"
 )
 
 func TestDefault_HasSensibleValues(t *testing.T) {
@@ -38,7 +38,7 @@ func TestDefault_HasSensibleValues(t *testing.T) {
 }
 
 func TestLoad_MissingFile_ReturnsDefaults(t *testing.T) {
-	cfg, err := config.Load("/tmp/epochqueue_nonexistent_config_12345.yaml")
+	cfg, err := config.Load("/tmp/pulsemq_nonexistent_config_12345.yaml")
 	if err != nil {
 		t.Fatalf("expected no error for missing file, got: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestLoad_OverridesDefaults(t *testing.T) {
 node:
   port: 9999
   host: "127.0.0.1"
-  data_dir: "/tmp/epochqueue_test"
+  data_dir: "/tmp/pulsemq_test"
 queue:
   max_messages: 500
   max_retries: 5

@@ -1,4 +1,4 @@
-# Contributing to EpochQueue
+# Contributing to PulseMQ
 
 Thank you for taking the time to contribute! This document explains how to get involved, what the coding standards are, and how the project is maintained.
 
@@ -40,8 +40,8 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). We are committ
 ## Getting the code
 
 ```bash
-git clone https://github.com/sneh-joshi/epochqueue
-cd epochqueue
+git clone https://github.com/sneh-joshi/pulsemq
+cd pulsemq
 go mod download
 ```
 
@@ -58,10 +58,10 @@ Requirements:
 go test ./... -count=1 -timeout 90s
 
 # Build binary
-go build -o epochqueue ./cmd/server
+go build -o pulsemq ./cmd/server
 
 # Start locally
-./epochqueue --config config.yaml
+./pulsemq --config config.yaml
 
 # Start with Docker
 cd docker && docker compose up -d
@@ -168,9 +168,9 @@ test(client): add TestStatsPaged covering paginated stats SDK method
 
 ## Reporting bugs
 
-Open a [GitHub Issue](https://github.com/sneh-joshi/epochqueue/issues/new) and include:
+Open a [GitHub Issue](https://github.com/sneh-joshi/pulsemq/issues/new) and include:
 
-- EpochQueue version (`/health` → `version` field)
+- PulseMQ version (`/health` → `version` field)
 - OS / architecture
 - Minimal reproduction steps (curl commands, config snippet)
 - Expected vs actual behaviour
@@ -180,7 +180,7 @@ Open a [GitHub Issue](https://github.com/sneh-joshi/epochqueue/issues/new) and i
 
 ## Requesting features
 
-Open a [GitHub Issue](https://github.com/sneh-joshi/epochqueue/issues/new) with the label `enhancement`. Describe:
+Open a [GitHub Issue](https://github.com/sneh-joshi/pulsemq/issues/new) with the label `enhancement`. Describe:
 
 - The use case / problem you are solving
 - Your proposed solution (optional)

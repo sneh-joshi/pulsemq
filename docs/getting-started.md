@@ -1,6 +1,6 @@
-# Getting Started with EpochQueue
+# Getting Started with PulseMQ
 
-This guide gets you from zero to running a EpochQueue server and publishing your first scheduled message in under 5 minutes.
+This guide gets you from zero to running a PulseMQ server and publishing your first scheduled message in under 5 minutes.
 
 ---
 
@@ -16,18 +16,18 @@ This guide gets you from zero to running a EpochQueue server and publishing your
 ### Option A — Docker Compose (recommended)
 
 ```bash
-git clone https://github.com/sneh-joshi/epochqueue
-cd epochqueue/docker
+git clone https://github.com/sneh-joshi/pulsemq
+cd pulsemq/docker
 docker compose up -d
 ```
 
 ### Option B — Build from source
 
 ```bash
-git clone https://github.com/sneh-joshi/epochqueue
-cd epochqueue
-go build -o epochqueue ./cmd/server
-./epochqueue --config config.yaml
+git clone https://github.com/sneh-joshi/pulsemq
+cd pulsemq
+go build -o pulsemq ./cmd/server
+./pulsemq --config config.yaml
 ```
 
 ### Option C — Run tests first
@@ -39,9 +39,9 @@ go test ./... -count=1 -timeout 90s
 All packages should pass. Then:
 
 ```bash
-./epochqueue                        # uses ./config.yaml by default
+./pulsemq                        # uses ./config.yaml by default
 # or
-./epochqueue --config /etc/epochqueue/config.yaml
+./pulsemq --config /etc/pulsemq/config.yaml
 ```
 
 ### Verify the server is up
@@ -61,7 +61,7 @@ Open the dashboard at http://localhost:8080/dashboard.
 
 ## 2. Publish your first message
 
-EpochQueue uses namespaces to group queues. Namespaces are auto-created on first use.
+PulseMQ uses namespaces to group queues. Namespaces are auto-created on first use.
 
 ```bash
 BASE=http://localhost:8080
@@ -141,7 +141,7 @@ The message will not appear in consume calls until the `deliver_at` time is reac
 ## 6. Use the Go SDK
 
 ```bash
-go get github.com/sneh-joshi/epochqueue/pkg/client
+go get github.com/sneh-joshi/pulsemq/pkg/client
 ```
 
 ```go
@@ -154,7 +154,7 @@ import (
     "log"
     "time"
 
-    "github.com/sneh-joshi/epochqueue/pkg/client"
+    "github.com/sneh-joshi/pulsemq/pkg/client"
 )
 
 func main() {
@@ -197,9 +197,74 @@ func mustJSON(v any) []byte {
 
 ---
 
-## 7. Subscribe a webhook
+## 7. Using from Python or Node.js
 
-EpochQueue will POST messages to your URL as they become READY.
+PulseMQ exposes a plain HTTP API — no SDK required. Any HTTP client works.
+
+### Python (requests)
+
+```python
+import requests, base64, json, time
+
+BASE = "http://localhost:8080"
+
+def encode(payload: dict) -> str:
+    return base64.b64encode(json.dumps(payload).encode()).decode()
+
+# Publish immediately
+requests.post(f"{BASE}/namespaces/payments/queues/invoices/messages",
+              json={"body": encode({"amount": 42})})
+
+# Schedule in 1 hour
+deliver_at = int(time.time() * 1000) + 3_600_000
+requests.post(f"{BASE}/namespaces/payments/queues/invoices/messages",
+              json={"body": encode({"amount": 99}), "deliver_at": deliver_at})
+
+# Consume + ACK
+r = requests.get(f"{BASE}/namespaces/payments/queues/invoices/messages?n=10")
+for msg in r.json()["messages"]:
+    body = json.loads(base64.b64decode(msg["body"]))
+    print("got:", body)
+    requests.delete(f"{BASE}/messages/{msg['receipt_handle']}")
+```
+
+### Node.js (built-in fetch, Node 18+)
+
+```js
+const BASE = "http://localhost:8080";
+const encode = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64");
+
+// Publish immediately
+await fetch(`${BASE}/namespaces/payments/queues/invoices/messages`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ body: encode({ amount: 42 }) }),
+});
+
+// Schedule in 1 hour
+await fetch(`${BASE}/namespaces/payments/queues/invoices/messages`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ body: encode({ amount: 99 }), deliver_at: Date.now() + 3_600_000 }),
+});
+
+// Consume + ACK
+const { messages } = await fetch(
+  `${BASE}/namespaces/payments/queues/invoices/messages?n=10`
+).then((r) => r.json());
+
+for (const msg of messages) {
+  const body = JSON.parse(Buffer.from(msg.body, "base64").toString());
+  console.log("got:", body);
+  await fetch(`${BASE}/messages/${msg.receipt_handle}`, { method: "DELETE" });
+}
+```
+
+---
+
+## 8. Subscribe a webhook
+
+PulseMQ will POST messages to your URL as they become READY.
 
 ```bash
 curl -s -X POST "$BASE/namespaces/payments/queues/invoices/subscriptions" \
@@ -216,7 +281,7 @@ Your endpoint will receive:
 ```
 POST https://myapp.example.com/webhooks/invoices
 Content-Type: application/json
-X-EpochQueue-Signature: sha256=<hmac>
+X-PulseMQ-Signature: sha256=<hmac>
 
 {"id":"…","body":"…","namespace":"payments","queue":"invoices",…}
 ```
@@ -230,7 +295,7 @@ curl -s -X DELETE "$BASE/subscriptions/01JP5X4…-sub"
 
 ---
 
-## 8. Inspect the DLQ
+## 9. Inspect the DLQ
 
 After `max_retries` exhausted, failed messages land in the DLQ:
 
@@ -244,7 +309,7 @@ curl -s -X POST "$BASE/namespaces/payments/queues/invoices/dlq/replay"
 
 ---
 
-## 9. Enable auth
+## 10. Enable auth
 
 In `config.yaml`:
 
@@ -268,9 +333,9 @@ c := client.New("http://localhost:8080", client.WithAPIKey("my-secret-key"))
 
 ---
 
-## 10. Prometheus metrics
+## 11. Prometheus metrics
 
-EpochQueue exposes Prometheus metrics on port 9090 (configurable):
+PulseMQ exposes Prometheus metrics on port 9090 (configurable):
 
 ```bash
 curl http://localhost:9090/metrics
@@ -286,7 +351,7 @@ Add a scrape config to `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: epochqueue
+  - job_name: pulsemq
     static_configs:
       - targets: ['localhost:9090']
 ```
@@ -296,5 +361,5 @@ scrape_configs:
 ## Next steps
 
 - [API Reference](api-reference.md) — complete endpoint documentation
-- [Architecture](architecture.md) — how EpochQueue works internally
+- [Architecture](architecture.md) — how PulseMQ works internally
 - [config.yaml](../config.yaml) — all configuration options with comments

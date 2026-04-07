@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sneh-joshi/epochqueue/internal/scheduler"
-	"github.com/sneh-joshi/epochqueue/internal/storage"
+	"github.com/sneh-joshi/pulsemq/internal/scheduler"
+	"github.com/sneh-joshi/pulsemq/internal/storage"
 )
 
 // ─── DLQ naming ──────────────────────────────────────────────────────────────

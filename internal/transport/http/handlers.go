@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/broker"
-	"github.com/sneh-joshi/epochqueue/internal/consumer"
-	"github.com/sneh-joshi/epochqueue/internal/namespace"
-	"github.com/sneh-joshi/epochqueue/internal/queue"
+	"github.com/sneh-joshi/pulsemq/internal/broker"
+	"github.com/sneh-joshi/pulsemq/internal/consumer"
+	"github.com/sneh-joshi/pulsemq/internal/namespace"
+	"github.com/sneh-joshi/pulsemq/internal/queue"
 )
 
 // Compile-time check that queue is used (avoid "imported and not used" error
@@ -619,7 +619,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, v any) bool {
 
 // validWebhookURL checks that the target URL is a plain http or https address.
 // This prevents SSRF via other URI schemes (file://, ftp://, gopher://, etc.).
-// Note: it does not block private RFC-1918 ranges because EpochQueue is a
+// Note: it does not block private RFC-1918 ranges because PulseMQ is a
 // self-hosted server where the operator controls what endpoints are reachable.
 // Operators who need SSRF protection at the network level should use firewall
 // rules or an egress proxy.
