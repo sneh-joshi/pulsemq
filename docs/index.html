@@ -676,6 +676,10 @@ curl -X POST "http://localhost:8080/namespaces/payments/queues/reminders/message
       <span class="stat-value">0</span>
       <span class="stat-label">runtime dependencies</span>
     </div>
+    <div class="stat-item">
+      <span class="stat-value">~15k</span>
+      <span class="stat-label">msgs/sec (single node)</span>
+    </div>
   </div>
 </div>
 <hr class="divider">
@@ -1079,7 +1083,7 @@ docker compose up -d</div>
         </div>
         <div class="code-body"><span class="kw">services</span>:
   <span class="fn">pulsemq</span>:
-    <span class="type">image</span>: pulsemq:latest  <span class="cmt"># local image until registry release</span>
+    <span class="type">image</span>: pulsemq/pulsemq:latest
     <span class="type">ports</span>:
       - <span class="str">"8080:8080"</span>   <span class="cmt"># API + dashboard</span>
       - <span class="str">"9090:9090"</span>   <span class="cmt"># Prometheus metrics</span>
@@ -1213,7 +1217,7 @@ go build -o pulsemq ./cmd/server
         <tr>
           <td>Maximum connections</td>
           <td colspan="2" class="ok" style="text-align:center">~65,000 TCP</td>
-          <td class="muted">OS ulimit — not an PulseMQ limit.</td>
+          <td class="muted">OS ulimit — not a PulseMQ limit.</td>
         </tr>
         <tr>
           <td>In-memory index @ 10 GB RAM</td>
