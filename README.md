@@ -7,6 +7,8 @@ Durable message queue with native scheduled delivery. Self-hosted. Zero dependen
 [![Go](https://img.shields.io/badge/Go-1.25-blue)](https://golang.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Docker](https://img.shields.io/docker/v/pulsemq/pulsemq?label=Docker%20Hub&logo=docker)](https://hub.docker.com/r/pulsemq/pulsemq)
+[![Docker Pulls](https://img.shields.io/docker/pulls/pulsemq/pulsemq)](https://hub.docker.com/r/pulsemq/pulsemq)
+[![Docker Image Size](https://img.shields.io/docker/image-size/pulsemq/pulsemq/latest)](https://hub.docker.com/r/pulsemq/pulsemq)
 [![Website](https://img.shields.io/badge/website-pulsemq.dev-7c5cfc)](https://sneh-joshi.github.io/pulsemq)
 
 ![PulseMQ demo — queue depth updating live and scheduled delivery firing](docs/demo.gif)
