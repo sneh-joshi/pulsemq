@@ -156,7 +156,7 @@ func RateLimitMiddleware(rps float64, burst int) func(http.Handler) http.Handler
 // back to RemoteAddr.
 //
 // Security note: X-Forwarded-For can be spoofed when there is no trusted
-// reverse proxy in front of EpochQueue.  If running directly on the internet
+// reverse proxy in front of PulseMQ.  If running directly on the internet
 // without a proxy, disable proxy trust in a future config option.
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {

@@ -1,4 +1,4 @@
-// Package namespace manages the EpochQueue namespace registry.
+// Package namespace manages the PulseMQ namespace registry.
 //
 // A namespace is a logical grouping of queues (e.g. "payments", "notifications").
 // Namespaces are created implicitly on first use via Ensure(), or explicitly

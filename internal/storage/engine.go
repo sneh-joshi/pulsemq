@@ -9,7 +9,7 @@ package storage
 import (
 	"errors"
 
-	"github.com/sneh-joshi/epochqueue/internal/types"
+	"github.com/sneh-joshi/pulsemq/internal/types"
 )
 
 // ErrNotFound is returned when a message or index entry does not exist.

@@ -1,9 +1,9 @@
-// Command epochqueue-server is the EpochQueue queue server process.
+// Command pulsemq-server is the PulseMQ queue server process.
 // It loads configuration, initialises node identity, and starts the server.
 //
 // Usage:
 //
-//	epochqueue-server [--config path/to/config.yaml]
+//	pulsemq-server [--config path/to/config.yaml]
 package main
 
 import (
@@ -18,18 +18,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/broker"
-	"github.com/sneh-joshi/epochqueue/internal/config"
-	"github.com/sneh-joshi/epochqueue/internal/consumer"
-	"github.com/sneh-joshi/epochqueue/internal/metrics"
-	"github.com/sneh-joshi/epochqueue/internal/namespace"
-	"github.com/sneh-joshi/epochqueue/internal/node"
-	transphttp "github.com/sneh-joshi/epochqueue/internal/transport/http"
+	"github.com/sneh-joshi/pulsemq/internal/broker"
+	"github.com/sneh-joshi/pulsemq/internal/config"
+	"github.com/sneh-joshi/pulsemq/internal/consumer"
+	"github.com/sneh-joshi/pulsemq/internal/metrics"
+	"github.com/sneh-joshi/pulsemq/internal/namespace"
+	"github.com/sneh-joshi/pulsemq/internal/node"
+	transphttp "github.com/sneh-joshi/pulsemq/internal/transport/http"
 )
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "epochqueue: %v\n", err)
+		fmt.Fprintf(os.Stderr, "pulsemq: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -59,7 +59,7 @@ func run() error {
 		return fmt.Errorf("init node: %w", err)
 	}
 
-	slog.Info("epochqueue starting",
+	slog.Info("pulsemq starting",
 		"node_id", n.ID(),
 		"host", cfg.Node.Host,
 		"port", cfg.Node.Port,
@@ -95,7 +95,7 @@ func run() error {
 	// Serve in a background goroutine so we can handle signals.
 	serveErr := make(chan error, 1)
 	go func() {
-		slog.Info("epochqueue ready", "node_id", n.ID(), "addr", addr)
+		slog.Info("pulsemq ready", "node_id", n.ID(), "addr", addr)
 		if err := srv.ListenAndServe(addr); !errors.Is(err, http.ErrServerClosed) {
 			serveErr <- err
 		} else {
@@ -141,6 +141,6 @@ func run() error {
 		slog.Warn("broker close error", "err", err)
 	}
 
-	slog.Info("epochqueue stopped")
+	slog.Info("pulsemq stopped")
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sneh-joshi/epochqueue/internal/metrics"
+	"github.com/sneh-joshi/pulsemq/internal/metrics"
 )
 
 // ─── labelCounter ─────────────────────────────────────────────────────────────
@@ -117,8 +117,8 @@ func TestHandler_PublishedCounter(t *testing.T) {
 
 	body := scrape(t, &reg)
 
-	mustContain(t, body, "# HELP epochqueue_messages_published_total")
-	mustContain(t, body, "# TYPE epochqueue_messages_published_total counter")
+	mustContain(t, body, "# HELP pulsemq_messages_published_total")
+	mustContain(t, body, "# TYPE pulsemq_messages_published_total counter")
 	mustContain(t, body, `namespace="payments"`)
 	mustContain(t, body, `queue="invoices"`)
 	mustContain(t, body, `namespace="analytics"`)
@@ -133,12 +133,12 @@ func TestHandler_HTTPCounters(t *testing.T) {
 
 	body := scrape(t, &reg)
 
-	mustContain(t, body, "# HELP epochqueue_http_requests_total")
+	mustContain(t, body, "# HELP pulsemq_http_requests_total")
 	mustContain(t, body, `method="GET"`)
 	mustContain(t, body, `path="/health"`)
 	mustContain(t, body, `status="200"`)
-	mustContain(t, body, "epochqueue_http_request_duration_milliseconds_sum")
-	mustContain(t, body, "epochqueue_http_request_duration_milliseconds_count")
+	mustContain(t, body, "pulsemq_http_request_duration_milliseconds_sum")
+	mustContain(t, body, "pulsemq_http_request_duration_milliseconds_count")
 }
 
 func TestHandler_MultipleMetricFamilies(t *testing.T) {
@@ -153,11 +153,11 @@ func TestHandler_MultipleMetricFamilies(t *testing.T) {
 
 	body := scrape(t, &reg)
 
-	mustContain(t, body, "epochqueue_messages_published_total")
-	mustContain(t, body, "epochqueue_messages_consumed_total")
-	mustContain(t, body, "epochqueue_messages_acked_total")
-	mustContain(t, body, "epochqueue_messages_nacked_total")
-	mustContain(t, body, "epochqueue_messages_dlq_routed_total")
+	mustContain(t, body, "pulsemq_messages_published_total")
+	mustContain(t, body, "pulsemq_messages_consumed_total")
+	mustContain(t, body, "pulsemq_messages_acked_total")
+	mustContain(t, body, "pulsemq_messages_nacked_total")
+	mustContain(t, body, "pulsemq_messages_dlq_routed_total")
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────

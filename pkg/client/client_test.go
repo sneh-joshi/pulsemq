@@ -9,18 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/broker"
-	"github.com/sneh-joshi/epochqueue/internal/config"
-	"github.com/sneh-joshi/epochqueue/internal/consumer"
-	"github.com/sneh-joshi/epochqueue/internal/metrics"
-	"github.com/sneh-joshi/epochqueue/internal/namespace"
-	transphttp "github.com/sneh-joshi/epochqueue/internal/transport/http"
-	"github.com/sneh-joshi/epochqueue/pkg/client"
+	"github.com/sneh-joshi/pulsemq/internal/broker"
+	"github.com/sneh-joshi/pulsemq/internal/config"
+	"github.com/sneh-joshi/pulsemq/internal/consumer"
+	"github.com/sneh-joshi/pulsemq/internal/metrics"
+	"github.com/sneh-joshi/pulsemq/internal/namespace"
+	transphttp "github.com/sneh-joshi/pulsemq/internal/transport/http"
+	"github.com/sneh-joshi/pulsemq/pkg/client"
 )
 
 // ─── test server helpers ──────────────────────────────────────────────────────
 
-// newTestEnv spins up a real EpochQueue stack (broker + HTTP) backed by httptest.Server.
+// newTestEnv spins up a real PulseMQ stack (broker + HTTP) backed by httptest.Server.
 // All resources are cleaned up in t.Cleanup.
 func newTestEnv(t *testing.T) *client.Client {
 	t.Helper()

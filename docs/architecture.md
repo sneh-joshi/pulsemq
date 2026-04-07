@@ -1,6 +1,6 @@
-# EpochQueue Architecture
+# PulseMQ Architecture
 
-This document describes the internal design of EpochQueue Phase 1 (single-node). It explains **what each package does**, **how they are wired together**, and **why specific design decisions were made**.
+This document describes the internal design of PulseMQ Phase 1 (single-node). It explains **what each package does**, **how they are wired together**, and **why specific design decisions were made**.
 
 ---
 
@@ -77,7 +77,7 @@ local.StorageEngine.Append(msg)
 200 OK {"id":"01JP…"}
 ```
 
-The WAL entry is written **before** the in-memory queue state changes. On restart, EpochQueue replays the WAL to reconstruct in-memory state for all queues.
+The WAL entry is written **before** the in-memory queue state changes. On restart, PulseMQ replays the WAL to reconstruct in-memory state for all queues.
 
 ---
 
@@ -91,7 +91,7 @@ every 1 second:
     SELECT * FROM messages WHERE deliver_at <= NOW()   ← O(N), gets slower as queue grows
 ```
 
-### EpochQueue approach: Min-Heap
+### PulseMQ approach: Min-Heap
 ```
 Min-Heap (ordered by deliverAt, root = earliest)
     peek root → O(1)
@@ -187,7 +187,23 @@ A background goroutine runs every `storage.compaction_interval` (default 1 hour)
 
 Compaction does not run during heavy write load (configurable grace period).
 
-### fsync policy
+### Durability guarantees
+
+**What is never lost:**
+On a clean shutdown or a restart PulseMQ replays the WAL and rebuilds in-memory state exactly as it was. CRC32 checksums detect and discard partial trailing writes caused by a mid-write crash.
+
+**What can be lost on an unclean shutdown** (hard kill, OOM, power cut) depends on the configured `fsync` mode:
+
+| fsync mode | Data-loss window | Recommended for |
+|---|---|---|
+| `always` | **Zero** — every write is flushed to disk before the API responds | Payment retries, financial workflows |
+| `interval` *(default, 1 000 ms)* | Up to **~1 second** of published messages | General use |
+| `batch` | Up to the configured batch count | Throughput-oriented workloads |
+| `never` | Any writes since the last OS page flush (seconds–minutes) | Dev / ephemeral environments only |
+
+> **Production recommendation:** For payment retries or any workflow where losing an enqueued message is unacceptable, set `storage.fsync: always` in `config.yaml`. Expect ~5 000 writes/sec at that setting. The default `interval` mode loses at most the messages published in the last 1 second before a hard crash.
+
+### fsync policy (config reference)
 
 | Setting | Behaviour | Tradeoff |
 |---------|-----------|----------|

@@ -4,11 +4,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sneh-joshi/epochqueue/internal/dlq"
-	"github.com/sneh-joshi/epochqueue/internal/node"
-	"github.com/sneh-joshi/epochqueue/internal/queue"
-	"github.com/sneh-joshi/epochqueue/internal/storage"
-	"github.com/sneh-joshi/epochqueue/internal/storage/local"
+	"github.com/sneh-joshi/pulsemq/internal/dlq"
+	"github.com/sneh-joshi/pulsemq/internal/node"
+	"github.com/sneh-joshi/pulsemq/internal/queue"
+	"github.com/sneh-joshi/pulsemq/internal/storage"
+	"github.com/sneh-joshi/pulsemq/internal/storage/local"
 )
 
 func newFactory(baseDir string) queue.EngineFactory {

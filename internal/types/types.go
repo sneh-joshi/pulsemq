@@ -1,5 +1,5 @@
-// Package types contains the core domain types shared across all EpochQueue
-// internal packages. It deliberately has zero imports of other EpochQueue packages
+// Package types contains the core domain types shared across all PulseMQ
+// internal packages. It deliberately has zero imports of other PulseMQ packages
 // so that both the storage layer and the queue layer can import from it without
 // creating import cycles.
 package types
@@ -42,7 +42,7 @@ func (s Status) String() string {
 	}
 }
 
-// Message is the canonical, immutable unit of data in EpochQueue.
+// Message is the canonical, immutable unit of data in PulseMQ.
 //
 // Design rules:
 //   - Message format is final. Only optional fields may be added. Never rename

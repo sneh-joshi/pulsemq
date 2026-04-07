@@ -1,9 +1,9 @@
-# EpochQueue configuration file
+# PulseMQ configuration file
 # All values shown are the defaults — only override what you need.
 # Config structure never shrinks: fields are only added, never removed.
 
 node:
-  # id: "auto" means EpochQueue generates a ULID on first start and persists it to
+  # id: "auto" means PulseMQ generates a ULID on first start and persists it to
   # data_dir/node_id. You can also set an explicit ULID string here.
   id: "auto"
   host: "0.0.0.0"
@@ -86,7 +86,7 @@ auth:
   enabled: false
   api_key: ""
   # api_key: "your-secret-key"
-  # You can also set this via env var: EPOCHQUEUE_AUTH_API_KEY=your-secret-key
+  # You can also set this via env var: PULSEMQ_AUTH_API_KEY=your-secret-key
 
 metrics:
   # Prometheus metrics endpoint on a separate port.

@@ -11,11 +11,11 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/sneh-joshi/epochqueue/internal/types"
+	"github.com/sneh-joshi/pulsemq/internal/types"
 )
 
 // walMagic is the 4-byte header written at the start of every wal.dat file.
-// It identifies the file as a EpochQueue WAL and encodes the format version.
+// It identifies the file as a PulseMQ WAL and encodes the format version.
 var walMagic = [4]byte{0x4C, 0x51, 0x57, 0x01} // "LQW\x01"
 
 // WAL operation byte values.

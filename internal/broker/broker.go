@@ -1,4 +1,4 @@
-// Package broker is the central orchestrator for EpochQueue.
+// Package broker is the central orchestrator for PulseMQ.
 //
 // All application code (HTTP handlers, WebSocket, webhook consumer) talks to
 // the Broker — never directly to the queue or storage layer. This enforces the
@@ -23,15 +23,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/config"
-	"github.com/sneh-joshi/epochqueue/internal/dlq"
-	"github.com/sneh-joshi/epochqueue/internal/metrics"
-	"github.com/sneh-joshi/epochqueue/internal/namespace"
-	"github.com/sneh-joshi/epochqueue/internal/node"
-	"github.com/sneh-joshi/epochqueue/internal/queue"
-	"github.com/sneh-joshi/epochqueue/internal/scheduler"
-	"github.com/sneh-joshi/epochqueue/internal/storage"
-	"github.com/sneh-joshi/epochqueue/internal/storage/local"
+	"github.com/sneh-joshi/pulsemq/internal/config"
+	"github.com/sneh-joshi/pulsemq/internal/dlq"
+	"github.com/sneh-joshi/pulsemq/internal/metrics"
+	"github.com/sneh-joshi/pulsemq/internal/namespace"
+	"github.com/sneh-joshi/pulsemq/internal/node"
+	"github.com/sneh-joshi/pulsemq/internal/queue"
+	"github.com/sneh-joshi/pulsemq/internal/scheduler"
+	"github.com/sneh-joshi/pulsemq/internal/storage"
+	"github.com/sneh-joshi/pulsemq/internal/storage/local"
 )
 
 // ─── Error sentinels ──────────────────────────────────────────────────────────

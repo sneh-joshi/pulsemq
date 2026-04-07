@@ -1,4 +1,4 @@
-// Package config holds all configuration types and loading logic for EpochQueue.
+// Package config holds all configuration types and loading logic for PulseMQ.
 // Config structure never shrinks — fields are only added, never renamed or removed.
 package config
 
@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config is the root configuration for a EpochQueue server instance.
+// Config is the root configuration for a PulseMQ server instance.
 type Config struct {
 	Node      NodeConfig     `yaml:"node"`
 	Cluster   ClusterConfig  `yaml:"cluster"`
@@ -150,13 +150,13 @@ func Default() *Config {
 
 // Load reads a YAML config file at path and overlays it on top of Default().
 // If the file does not exist the default config is returned without error,
-// making it easy to run EpochQueue with no config file at all.
+// making it easy to run PulseMQ with no config file at all.
 //
 // After loading the file, environment variables are applied as overrides:
 //
-//	EPOCHQUEUE_AUTH_API_KEY   — sets auth.api_key and enables auth (auth.enabled = true)
-//	EPOCHQUEUE_DATA_DIR       — sets node.data_dir
-//	EPOCHQUEUE_PORT           — sets node.port
+//	PULSEMQ_AUTH_API_KEY   — sets auth.api_key and enables auth (auth.enabled = true)
+//	PULSEMQ_DATA_DIR       — sets node.data_dir
+//	PULSEMQ_PORT           — sets node.port
 func Load(path string) (*Config, error) {
 	cfg := Default()
 
@@ -179,14 +179,14 @@ func Load(path string) (*Config, error) {
 
 // applyEnv overlays environment variable overrides onto cfg.
 func applyEnv(cfg *Config) {
-	if v := os.Getenv("EPOCHQUEUE_AUTH_API_KEY"); v != "" {
+	if v := os.Getenv("PULSEMQ_AUTH_API_KEY"); v != "" {
 		cfg.Auth.APIKey = v
 		cfg.Auth.Enabled = true
 	}
-	if v := os.Getenv("EPOCHQUEUE_DATA_DIR"); v != "" {
+	if v := os.Getenv("PULSEMQ_DATA_DIR"); v != "" {
 		cfg.Node.DataDir = v
 	}
-	if v := os.Getenv("EPOCHQUEUE_PORT"); v != "" {
+	if v := os.Getenv("PULSEMQ_PORT"); v != "" {
 		var p int
 		if _, err := fmt.Sscanf(v, "%d", &p); err == nil && p > 0 {
 			cfg.Node.Port = p

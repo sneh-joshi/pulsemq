@@ -1,4 +1,4 @@
-// Package node manages the identity of this EpochQueue server instance.
+// Package node manages the identity of this PulseMQ server instance.
 // Every node has a persistent ULID that is generated on first start and stored
 // in the data directory. This identity is embedded in every WAL entry so that,
 // when clustering is added in Phase 2, the origin of each log entry is always
@@ -21,7 +21,7 @@ import (
 
 const nodeIDFile = "node_id"
 
-// ID is a ULID string that uniquely identifies a EpochQueue process.
+// ID is a ULID string that uniquely identifies a PulseMQ process.
 // It is stable across restarts within the same data directory.
 type ID string
 

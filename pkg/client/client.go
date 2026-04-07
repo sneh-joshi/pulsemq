@@ -1,4 +1,4 @@
-// Package client is the official Go SDK for EpochQueue.
+// Package client is the official Go SDK for PulseMQ.
 //
 // # Quick start
 //
@@ -46,14 +46,14 @@ import (
 
 // ─── Error type ───────────────────────────────────────────────────────────────
 
-// APIError is returned when the EpochQueue server responds with a non-2xx status.
+// APIError is returned when the PulseMQ server responds with a non-2xx status.
 type APIError struct {
 	StatusCode int    // HTTP status code
 	Message    string // "error" field from the JSON response body
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("epochqueue: server returned %d: %s", e.StatusCode, e.Message)
+	return fmt.Sprintf("pulsemq: server returned %d: %s", e.StatusCode, e.Message)
 }
 
 // IsNotFound reports whether the error is a 404 from the server.
@@ -93,17 +93,17 @@ func WithTimeout(d time.Duration) ClientOption {
 
 // ─── Client ───────────────────────────────────────────────────────────────────
 
-// Client is the EpochQueue API client. It is safe for concurrent use.
+// Client is the PulseMQ API client. It is safe for concurrent use.
 type Client struct {
 	baseURL string
 	apiKey  string
 	http    *http.Client
 }
 
-// New creates a new Client that connects to the EpochQueue server at baseURL.
+// New creates a new Client that connects to the PulseMQ server at baseURL.
 //
 //	c := client.New("http://localhost:8080")
-//	c := client.New("http://epochqueue.example.com", client.WithAPIKey("secret"))
+//	c := client.New("http://pulsemq.example.com", client.WithAPIKey("secret"))
 func New(baseURL string, opts ...ClientOption) *Client {
 	c := &Client{
 		baseURL: baseURL,
@@ -321,7 +321,7 @@ func (c *Client) Consume(ctx context.Context, namespace, queue string, n int, op
 	for i := range resp.Messages {
 		m, err := resp.Messages[i].toMessage()
 		if err != nil {
-			return nil, fmt.Errorf("epochqueue: decode message %d: %w", i, err)
+			return nil, fmt.Errorf("pulsemq: decode message %d: %w", i, err)
 		}
 		out = append(out, m)
 	}
@@ -455,7 +455,7 @@ func (c *Client) ReplayDLQ(ctx context.Context, namespace, queue string, limit i
 
 // Subscribe registers a webhook URL for the named queue.
 // The server will POST messages to url as they become ready.
-// secret is used to sign the request body with HMAC-SHA256 (X-EpochQueue-Signature).
+// secret is used to sign the request body with HMAC-SHA256 (X-PulseMQ-Signature).
 // Set secret to "" to disable signing.
 // Returns the subscription ID needed to call Unsubscribe.
 func (c *Client) Subscribe(ctx context.Context, namespace, queue, webhookURL, secret string) (string, error) {
@@ -569,14 +569,14 @@ func (c *Client) do(ctx context.Context, method, path string, body, resp any) er
 	if body != nil {
 		data, err := json.Marshal(body)
 		if err != nil {
-			return fmt.Errorf("epochqueue: marshal request: %w", err)
+			return fmt.Errorf("pulsemq: marshal request: %w", err)
 		}
 		reqBody = bytes.NewReader(data)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, reqBody)
 	if err != nil {
-		return fmt.Errorf("epochqueue: build request: %w", err)
+		return fmt.Errorf("pulsemq: build request: %w", err)
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -588,7 +588,7 @@ func (c *Client) do(ctx context.Context, method, path string, body, resp any) er
 
 	httpResp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("epochqueue: request %s %s: %w", method, path, err)
+		return fmt.Errorf("pulsemq: request %s %s: %w", method, path, err)
 	}
 	defer httpResp.Body.Close()
 
@@ -599,7 +599,7 @@ func (c *Client) do(ctx context.Context, method, path string, body, resp any) er
 
 	respBody, err := io.ReadAll(httpResp.Body)
 	if err != nil {
-		return fmt.Errorf("epochqueue: read response body: %w", err)
+		return fmt.Errorf("pulsemq: read response body: %w", err)
 	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -616,7 +616,7 @@ func (c *Client) do(ctx context.Context, method, path string, body, resp any) er
 
 	if resp != nil && len(respBody) > 0 {
 		if err := json.Unmarshal(respBody, resp); err != nil {
-			return fmt.Errorf("epochqueue: decode response: %w", err)
+			return fmt.Errorf("pulsemq: decode response: %w", err)
 		}
 	}
 	return nil

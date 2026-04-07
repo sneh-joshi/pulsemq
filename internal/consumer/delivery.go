@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sneh-joshi/epochqueue/internal/queue"
+	"github.com/sneh-joshi/pulsemq/internal/queue"
 )
 
 // webhookPayload is the JSON body POSTed to the webhook URL.
@@ -56,7 +56,7 @@ func deliverMessage(ctx context.Context, client *http.Client, sub *Subscription,
 		mac := hmac.New(sha256.New, []byte(sub.secret))
 		mac.Write(body)
 		sig := hex.EncodeToString(mac.Sum(nil))
-		req.Header.Set("X-EpochQueue-Signature", "sha256="+sig)
+		req.Header.Set("X-PulseMQ-Signature", "sha256="+sig)
 	}
 
 	resp, err := client.Do(req)

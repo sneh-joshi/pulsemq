@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sneh-joshi/epochqueue/internal/node"
-	"github.com/sneh-joshi/epochqueue/internal/storage"
+	"github.com/sneh-joshi/pulsemq/internal/node"
+	"github.com/sneh-joshi/pulsemq/internal/storage"
 )
 
 // ─── Per-queue config ─────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ type DequeueResult struct {
 
 // ─── Queue ────────────────────────────────────────────────────────────────────
 
-// Queue is the heart of EpochQueue: an in-memory + on-disk FIFO queue with
+// Queue is the heart of PulseMQ: an in-memory + on-disk FIFO queue with
 // visibility timeouts, durable writes, and optional scheduling support.
 //
 // Architecture:
