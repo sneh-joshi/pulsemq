@@ -621,6 +621,7 @@
     <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#quickstart">Quick start</a></li>
     <li><a href="#use-cases">Use cases</a></li>
+    <li><a href="#ai-workflows">AI &amp; Agents</a></li>
     <li><a href="https://github.com/sneh-joshi/pulsemq/blob/main/docs/api-reference.md">API Docs</a></li>
   </ul>
   <div style="display:flex;gap:10px">
@@ -1163,6 +1164,91 @@ go build -o pulsemq ./cmd/server
         <p>Space out 10,000 marketing emails by staggering <code>deliver_at</code> timestamps. No external throttle service needed.</p>
         <span class="uc-tag">deliver_at: now + i * 100ms</span>
       </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ─── AI WORKFLOWS ─── -->
+<section id="ai-workflows">
+  <p class="section-label">AI &amp; Agents</p>
+  <h2 class="section-title">Built for AI agent pipelines.</h2>
+  <p class="section-sub">Agents need to act <em>later</em>, not just now. <code>deliver_at</code> + DLQ handles scheduling, rate limits, and async jobs without adding another dependency.</p>
+
+  <div class="uc-grid">
+    <div class="uc-card">
+      <div class="uc-icon">🤖</div>
+      <div class="uc-body">
+        <h4>Agent task scheduling</h4>
+        <p>"Remind me to follow up in 3 days" → agent publishes with <code>deliver_at = now + 3 days</code>. Fires exactly when due, no polling loop.</p>
+        <span class="uc-tag">deliver_at: now + 3 days</span>
+      </div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">⏱</div>
+      <div class="uc-body">
+        <h4>LLM rate limit handling</h4>
+        <p>Hit a 429? Publish the request with <code>deliver_at = now + retry_after_ms</code>. Consumer picks it up exactly when the window resets. No sleep loops.</p>
+        <span class="uc-tag">deliver_at: now + retry_after_ms</span>
+      </div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">⚡</div>
+      <div class="uc-body">
+        <h4>Async AI pipelines</h4>
+        <p>User submits → publish job → return ID immediately. Worker calls LLM, stores result. If it crashes mid-task, visibility timeout requeues automatically.</p>
+        <span class="uc-tag">publish → consume → notify</span>
+      </div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">🧑‍💻</div>
+      <div class="uc-body">
+        <h4>Human-in-the-loop</h4>
+        <p>Agent proposes action → publish to <code>pending_approval</code>. Human approves → ACK fires next step. No response → DLQ triggers auto-decline path.</p>
+        <span class="uc-tag">DLQ → auto-decline</span>
+      </div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">📊</div>
+      <div class="uc-body">
+        <h4>Scheduled AI reports</h4>
+        <p>Publish "generate weekly report" with <code>deliver_at = next Monday 9am</code>. Worker calls LLM, emails result. No cron job, no always-on process.</p>
+        <span class="uc-tag">deliver_at: monday9am</span>
+      </div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">🔗</div>
+      <div class="uc-body">
+        <h4>Multi-step agent chains</h4>
+        <p>Step 1 completes → publishes step 2 with a delay. Each step is durable, retriable, and observable from the dashboard.</p>
+        <span class="uc-tag">step1 → delay → step2</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+    <div class="code-header">
+      <span class="code-dot" style="background:#ff5f57"></span>
+      <span class="code-dot" style="background:#febc2e"></span>
+      <span class="code-dot" style="background:#28c840"></span>
+      <span style="margin-left:10px;font-size:12px;color:var(--muted)">agent.py — schedule a follow-up task</span>
+    </div>
+    <div class="code-body" style="font-size:13px;line-height:1.7">
+<span class="kw">import</span> time, base64, requests
+
+BASE = <span class="str">"http://localhost:8080"</span>
+
+<span class="cmt"># Agent schedules a follow-up 3 days from now</span>
+deliver_at = <span class="kw">int</span>(time.time() * <span class="num">1000</span>) + (<span class="num">3</span> * <span class="num">24</span> * <span class="num">3600</span> * <span class="num">1000</span>)
+
+requests.post(
+    <span class="str">f"{BASE}/namespaces/agents/queues/followups/messages"</span>,
+    json={
+        <span class="str">"body"</span>: base64.b64encode(<span class="str">b"email_followup:lead_id:123"</span>).decode(),
+        <span class="str">"deliver_at"</span>: deliver_at,
+    }
+)
+<span class="cmt"># Message fires in exactly 3 days. No cron. No polling. No extra service.</span>
     </div>
   </div>
 </section>

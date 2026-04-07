@@ -72,7 +72,39 @@ Durable message queue with native scheduled delivery. Self-hosted. Zero dependen
 
 ---
 
-## Quick Start
+## AI agent workflows
+
+`deliver_at` + DLQ makes PulseMQ a natural fit for AI pipelines:
+
+**Agent task scheduling** — User asks an agent to "follow up in 3 days"? Publish with `deliver_at = now + 3 days`. Fires exactly when due, no polling loop.
+
+**LLM rate limit handling** — Hit a 429? Publish the request with `deliver_at = now + retry_after_ms`. Consumer picks it up when the window resets. No sleep loops, no lost requests.
+
+**Async AI pipelines** — User submits → publish job → return ID immediately. Worker calls LLM, stores result. If it crashes mid-task, visibility timeout requeues automatically.
+
+**Human-in-the-loop** — Agent proposes action → publish to `pending_approval` queue. Human approves → ACK, next step fires. No response → DLQ triggers auto-decline path.
+
+```python
+import time, base64, requests
+
+BASE = "http://localhost:8080"
+
+# Agent schedules a follow-up 3 days from now
+deliver_at = int(time.time() * 1000) + (3 * 24 * 3600 * 1000)
+
+requests.post(
+    f"{BASE}/namespaces/agents/queues/followups/messages",
+    json={
+        "body": base64.b64encode(b"email_followup:lead_id:123").decode(),
+        "deliver_at": deliver_at,
+    }
+)
+# Message fires in exactly 3 days. No cron. No polling. No extra service.
+```
+
+---
+
+
 
 ### Docker Compose (recommended)
 
