@@ -1,8 +1,8 @@
 # PulseMQ
 
-> **Scheduled & durable message queue for immediate and delayed jobs.**
+> **Send it now. Send it later. One queue.**
 
-PulseMQ is a lightweight, self-hostable message queue server for developers who need **regular queueing + time-based delivery** without the operational complexity of heavyweight messaging systems or cloud lock-in.
+Durable message queue with native scheduled delivery. Self-hosted. Zero dependencies.
 
 [![Go](https://img.shields.io/badge/Go-1.25-blue)](https://golang.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)

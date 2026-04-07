@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/index.html"
+      - "docs/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -33,7 +33,7 @@ jobs:
       - name: Stage artifact directory
         run: |
           mkdir -p _site
-          cp docs/index.html _site/index.html
+          cp -r docs/. _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
