@@ -147,6 +147,56 @@ func TestValidate_NegativeMaxRetries(t *testing.T) {
 	}
 }
 
+// ─── applyEnv ─────────────────────────────────────────────────────────────────
+
+func TestLoad_ApplyEnv_AuthAPIKey(t *testing.T) {
+	t.Setenv("PULSEMQ_AUTH_API_KEY", "test-secret-key")
+	cfg, err := config.Load("/nonexistent-config-file.yaml")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Auth.APIKey != "test-secret-key" {
+		t.Errorf("APIKey: want %q, got %q", "test-secret-key", cfg.Auth.APIKey)
+	}
+	if !cfg.Auth.Enabled {
+		t.Error("Auth.Enabled should be true when API key is set via env")
+	}
+}
+
+func TestLoad_ApplyEnv_DataDir(t *testing.T) {
+	t.Setenv("PULSEMQ_DATA_DIR", "/tmp/pulsemq-test-data")
+	cfg, err := config.Load("/nonexistent-config-file.yaml")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Node.DataDir != "/tmp/pulsemq-test-data" {
+		t.Errorf("DataDir: want %q, got %q", "/tmp/pulsemq-test-data", cfg.Node.DataDir)
+	}
+}
+
+func TestLoad_ApplyEnv_Port(t *testing.T) {
+	t.Setenv("PULSEMQ_PORT", "9999")
+	cfg, err := config.Load("/nonexistent-config-file.yaml")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Node.Port != 9999 {
+		t.Errorf("Port: want 9999, got %d", cfg.Node.Port)
+	}
+}
+
+func TestLoad_ApplyEnv_Port_Invalid(t *testing.T) {
+	t.Setenv("PULSEMQ_PORT", "not-a-number")
+	cfg, err := config.Load("/nonexistent-config-file.yaml")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	// Invalid port env var should not change the default.
+	if cfg.Node.Port != 8080 {
+		t.Errorf("invalid port env: want default 8080, got %d", cfg.Node.Port)
+	}
+}
+
 // writeTempYAML writes content to a temp file and returns its path.
 func writeTempYAML(t *testing.T, content string) string {
 	t.Helper()
@@ -156,4 +206,138 @@ func writeTempYAML(t *testing.T, content string) string {
 		t.Fatalf("writeTempYAML: %v", err)
 	}
 	return path
+}
+
+// ─── Validate tests ───────────────────────────────────────────────────────────
+
+func TestValidate_ValidConfig_WithMetrics(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	if err := cfg.Validate(); err != nil {
+		t.Errorf("Validate on default config: unexpected error: %v", err)
+	}
+}
+
+func TestValidate_PortZero(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Node.Port = 0
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for port=0")
+	}
+}
+
+func TestValidate_PortTooHigh(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Node.Port = 70000
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for port=70000")
+	}
+}
+
+func TestValidate_EmptyDataDir_WithMetrics(t *testing.T) {
+	cfg := config.Default()
+	cfg.Metrics.Port = 9090
+	cfg.Node.DataDir = ""
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for empty data_dir")
+	}
+}
+
+func TestValidate_MaxBatchSizeZero(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Queue.MaxBatchSize = 0
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for max_batch_size=0")
+	}
+}
+
+func TestValidate_DefaultBatchSizeZero(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Queue.DefaultBatchSize = 0
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for default_batch_size=0")
+	}
+}
+
+func TestValidate_DefaultBatchExceedsMax(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Queue.DefaultBatchSize = cfg.Queue.MaxBatchSize + 1
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for default_batch_size > max_batch_size")
+	}
+}
+
+func TestValidate_MaxMessagesZero(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Queue.MaxMessages = 0
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for max_messages=0")
+	}
+}
+
+func TestValidate_MaxRetriesNegative(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Queue.MaxRetries = -1
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for max_retries=-1")
+	}
+}
+
+func TestValidate_MetricsPortZero(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 0
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for metrics.port=0")
+	}
+}
+
+func TestValidate_InvalidFsync_Policy(t *testing.T) {
+	cfg := config.Default()
+	cfg.Node.DataDir = t.TempDir()
+	cfg.Metrics.Port = 9090
+	cfg.Storage.Fsync = "invalid-policy"
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for invalid fsync policy")
+	}
+}
+
+// TestLoad_UnreadableFile verifies that Load returns an error when the config
+// file exists but cannot be read (permission denied), covering the non-ErrNotExist
+// error path (line 169 in config.go).
+func TestLoad_UnreadableFile(t *testing.T) {
+if os.Getuid() == 0 {
+t.Skip("running as root — file permissions have no effect")
+}
+f, err := os.CreateTemp(t.TempDir(), "config*.yaml")
+if err != nil {
+t.Fatalf("CreateTemp: %v", err)
+}
+path := f.Name()
+f.Close()
+
+if err := os.Chmod(path, 0o000); err != nil {
+t.Fatalf("Chmod: %v", err)
+}
+t.Cleanup(func() { _ = os.Chmod(path, 0o644) })
+
+_, err = config.Load(path)
+if err == nil {
+t.Fatal("expected error loading unreadable config file, got nil")
+}
 }

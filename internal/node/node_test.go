@@ -136,3 +136,96 @@ func TestMustNewID_IsMonotonicallyIncreasing(t *testing.T) {
 		t.Errorf("expected %s < %s (ULIDs must be monotonically increasing)", a, b)
 	}
 }
+
+func TestNode_DataDir(t *testing.T) {
+dir := t.TempDir()
+n, err := node.New(dir, "auto")
+if err != nil {
+t.Fatalf("New: %v", err)
+}
+if n.DataDir() != dir {
+t.Errorf("DataDir(): want %q, got %q", dir, n.DataDir())
+}
+}
+
+func TestNewID_ReturnsValidULID(t *testing.T) {
+id, err := node.NewID()
+if err != nil {
+t.Fatalf("NewID: %v", err)
+}
+if len(id) != 26 {
+t.Errorf("ULID should be 26 chars, got %d: %q", len(id), id)
+}
+}
+
+func TestMustNewID_NoPanic(t *testing.T) {
+// Should not panic under normal conditions.
+id := node.MustNewID()
+if len(id) != 26 {
+t.Errorf("ULID should be 26 chars, got %d", len(id))
+}
+}
+
+// TestNew_UnreadableIDFile_ReturnsError verifies that when the node_id file
+// exists but cannot be read (permission denied), New() returns an error.
+// This covers the non-ErrNotExist branch in node.go (lines 85-86).
+// The test is skipped when running as root (where chmod 000 has no effect).
+func TestNew_UnreadableIDFile_ReturnsError(t *testing.T) {
+if os.Getuid() == 0 {
+t.Skip("running as root — permission restrictions have no effect")
+}
+dir := t.TempDir()
+idFile := filepath.Join(dir, "node_id")
+// Write a valid-looking node_id file, then make it unreadable.
+if err := os.WriteFile(idFile, []byte("01ARZ3NDEKTSV4RRFFQ69G5FAV\n"), 0o640); err != nil {
+t.Fatalf("WriteFile: %v", err)
+}
+if err := os.Chmod(idFile, 0o000); err != nil {
+t.Fatalf("Chmod: %v", err)
+}
+t.Cleanup(func() { _ = os.Chmod(idFile, 0o640) })
+
+_, err := node.New(dir, "auto")
+if err == nil {
+t.Fatal("expected error for unreadable node_id file, got nil")
+}
+}
+
+// TestNew_MkdirAllFails_ReturnsError verifies that New returns an error when
+// os.MkdirAll fails (e.g., a file already exists at the target path).
+// This covers lines 47-49 in node.go.
+func TestNew_MkdirAllFails_ReturnsError(t *testing.T) {
+parent := t.TempDir()
+// Create a FILE at the path where the node would create a directory.
+blocked := filepath.Join(parent, "blocked")
+if err := os.WriteFile(blocked, []byte("block"), 0o640); err != nil {
+t.Fatalf("WriteFile: %v", err)
+}
+// Now try to use "blocked/data" as the dataDir — MkdirAll must fail because
+// "blocked" is a file, not a directory.
+_, err := node.New(filepath.Join(blocked, "data"), "auto")
+if err == nil {
+t.Fatal("expected error when os.MkdirAll fails, got nil")
+}
+}
+
+// TestNew_WriteFileFails_ReturnsError verifies that New returns an error when
+// writing the node_id file fails (e.g., the directory is not writable).
+// This covers lines 95-97 in node.go.
+func TestNew_WriteFileFails_ReturnsError(t *testing.T) {
+if os.Getuid() == 0 {
+t.Skip("running as root — permission restrictions have no effect")
+}
+dir := t.TempDir()
+// Make the directory read-only: MkdirAll will succeed (dir exists) but
+// WriteFile will fail (directory not writable).
+if err := os.Chmod(dir, 0o500); err != nil {
+t.Fatalf("Chmod: %v", err)
+}
+t.Cleanup(func() { _ = os.Chmod(dir, 0o750) })
+
+_, err := node.New(dir, "auto")
+if err == nil {
+t.Fatal("expected error when node_id WriteFile fails, got nil")
+}
+}

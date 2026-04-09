@@ -526,10 +526,16 @@ func (q *Queue) loadFromStorage() error {
 				q.msgCount++
 			} else {
 				// Still valid in-flight — restore tracking.
+				// MaxRetries is not stored in the index; read the message to restore it.
+				var maxRetries int
+				if msg, err := q.eng.ReadAt(entry.Offset); err == nil {
+					maxRetries = msg.MaxRetries
+				}
 				q.inFlight[entry.ReceiptHandle] = &InFlightEntry{
 					MsgID:         msgID,
 					Offset:        entry.Offset,
 					Attempt:       entry.Attempt,
+					MaxRetries:    maxRetries,
 					ReceiptHandle: entry.ReceiptHandle,
 					DeadlineMs:    entry.VisibilityDeadlineMs,
 				}

@@ -282,3 +282,142 @@ func TestScheduler_RescheduleReplacesExisting(t *testing.T) {
 		t.Errorf("Len after delivery: want 0, got %d", s.Len())
 	}
 }
+
+// ─── Cancel edge cases ────────────────────────────────────────────────────────
+
+// TestScheduler_Cancel_NonExistent verifies that cancelling a message that
+// is not scheduled is a safe no-op.
+func TestScheduler_Cancel_NonExistent(t *testing.T) {
+s := scheduler.New()
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+c := &collected{}
+s.Start(ctx, c.fn)
+defer s.Stop()
+
+// Should not panic or error.
+s.Cancel("does-not-exist")
+if s.Len() != 0 {
+t.Errorf("Len after no-op Cancel: want 0, got %d", s.Len())
+}
+}
+
+// TestScheduler_PeekReady_EmptyHeap verifies that scheduling then cancelling
+// all messages leaves the heap empty and the delivery goroutine blocks cleanly.
+func TestScheduler_PeekReady_EmptyHeap(t *testing.T) {
+s := scheduler.New()
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+c := &collected{}
+s.Start(ctx, c.fn)
+defer s.Stop()
+
+future := time.Now().Add(10 * time.Second).UnixMilli()
+s.Schedule("msg1", "ns/q", future)
+s.Schedule("msg2", "ns/q", future)
+
+if s.Len() != 2 {
+t.Fatalf("Len after schedule: want 2, got %d", s.Len())
+}
+
+s.Cancel("msg1")
+s.Cancel("msg2")
+
+if s.Len() != 0 {
+t.Errorf("Len after cancel all: want 0, got %d", s.Len())
+}
+// Give goroutine a moment — it should be blocked waiting for new messages,
+// not spinning.
+time.Sleep(20 * time.Millisecond)
+if c.len() != 0 {
+t.Errorf("expected no deliveries, got %d", c.len())
+}
+}
+
+// ─── Stop / context-cancel edge cases ────────────────────────────────────────
+
+// TestScheduler_StopTwice verifies that calling Stop() a second time is a safe
+// no-op (covers the `case <-s.done` branch in Stop()).
+func TestScheduler_StopTwice(t *testing.T) {
+s := scheduler.New()
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+c := &collected{}
+s.Start(ctx, c.fn)
+
+s.Stop()
+// Second Stop must not panic or block.
+s.Stop()
+}
+
+// TestScheduler_ContextCancel_EmptyHeap verifies that the delivery goroutine
+// exits cleanly when the context is cancelled while the heap is empty (covers
+// the `case <-ctx.Done()` branch in the empty-heap wait loop).
+func TestScheduler_ContextCancel_EmptyHeap(t *testing.T) {
+s := scheduler.New()
+ctx, cancel := context.WithCancel(context.Background())
+
+c := &collected{}
+s.Start(ctx, c.fn)
+defer s.Stop()
+
+// Cancel context while heap is empty.
+cancel()
+time.Sleep(50 * time.Millisecond)
+if c.len() != 0 {
+t.Errorf("expected 0 deliveries after ctx cancel, got %d", c.len())
+}
+}
+
+// TestScheduler_ContextCancel_DuringWait verifies that cancelling the context
+// while the scheduler is sleeping on a far-future message causes the goroutine
+// to exit without delivering (covers the sleep-select `case <-ctx.Done()`).
+func TestScheduler_ContextCancel_DuringWait(t *testing.T) {
+s := scheduler.New()
+ctx, cancel := context.WithCancel(context.Background())
+
+c := &collected{}
+s.Start(ctx, c.fn)
+defer s.Stop()
+
+// Schedule a message 10 s in the future so the goroutine sleeps.
+s.Schedule("future", "ns/q", time.Now().Add(10*time.Second).UnixMilli())
+time.Sleep(30 * time.Millisecond) // let goroutine enter the sleep
+
+cancel() // wake it via ctx.Done()
+time.Sleep(50 * time.Millisecond)
+if c.len() != 0 {
+t.Errorf("expected 0 deliveries after ctx cancel, got %d", c.len())
+}
+}
+
+// TestScheduler_TimerReset verifies that scheduling a new message with a closer
+// deliverAt while the goroutine is sleeping on a further message causes the
+// timer to be Reset and the closer message to fire first.
+// This covers the `t.Reset(...)` branch in the delivery loop.
+func TestScheduler_TimerReset(t *testing.T) {
+s := scheduler.New()
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+c := &collected{}
+s.Start(ctx, c.fn)
+defer s.Stop()
+
+// Schedule a far-future message first.
+s.Schedule("far", "ns/q", time.Now().Add(5*time.Second).UnixMilli())
+time.Sleep(20 * time.Millisecond) // goroutine is now sleeping on "far"
+
+// Schedule a nearer message → goroutine should Reset its timer.
+s.Schedule("near", "ns/q", time.Now().Add(80*time.Millisecond).UnixMilli())
+
+if !waitForCount(t, c, 1, 500*time.Millisecond) {
+t.Fatal("near message not delivered within 500ms after timer reset")
+}
+if c.ids()[0] != "near:ns/q" {
+t.Errorf("expected near:ns/q first, got %s", c.ids()[0])
+}
+}

@@ -539,3 +539,357 @@ func TestWithTimeout(t *testing.T) {
 		t.Fatal("expected error on unreachable server")
 	}
 }
+
+// ─── Subscribe / Unsubscribe ──────────────────────────────────────────────────
+
+func TestSubscribe_AndUnsubscribe(t *testing.T) {
+c := newTestEnv(t)
+
+if err := c.CreateNamespace(ctx(), "events"); err != nil {
+t.Fatalf("CreateNamespace: %v", err)
+}
+if err := c.CreateQueue(ctx(), "events", "clicks"); err != nil {
+t.Fatalf("CreateQueue: %v", err)
+}
+
+id, err := c.Subscribe(ctx(), "events", "clicks", "http://localhost:9999/webhook", "")
+if err != nil {
+t.Fatalf("Subscribe: %v", err)
+}
+if id == "" {
+t.Fatal("expected non-empty subscription ID")
+}
+
+if err := c.Unsubscribe(ctx(), id); err != nil {
+t.Fatalf("Unsubscribe: %v", err)
+}
+}
+
+// ─── APIError.Error ───────────────────────────────────────────────────────────
+
+func TestAPIError_Error_String(t *testing.T) {
+ae := &client.APIError{StatusCode: 404, Message: "not found"}
+got := ae.Error()
+if got != "pulsemq: server returned 404: not found" {
+t.Errorf("Error(): got %q", got)
+}
+}
+
+func TestAPIError_IsConflict(t *testing.T) {
+ae := &client.APIError{StatusCode: 409, Message: "already exists"}
+if !client.IsConflict(ae) {
+t.Error("IsConflict should return true for 409")
+}
+if client.IsNotFound(ae) {
+t.Error("IsNotFound should return false for 409")
+}
+}
+
+// ─── Option functions ─────────────────────────────────────────────────────────
+
+func TestWithHTTPClient(t *testing.T) {
+custom := &http.Client{Timeout: 5 * time.Second}
+c := client.New("http://localhost:1", client.WithHTTPClient(custom))
+// The custom client has a very short timeout; connecting to :1 should fail.
+_, err := c.Health(ctx())
+if err == nil {
+t.Fatal("expected error with custom http client on unreachable server")
+}
+}
+
+func TestWithMaxRetries(t *testing.T) {
+c := newTestEnv(t)
+
+if err := c.CreateNamespace(ctx(), "retries"); err != nil {
+t.Fatalf("CreateNamespace: %v", err)
+}
+if err := c.CreateQueue(ctx(), "retries", "work"); err != nil {
+t.Fatalf("CreateQueue: %v", err)
+}
+
+id, err := c.Publish(ctx(), "retries", "work", []byte("payload"),
+client.WithMaxRetries(5))
+if err != nil {
+t.Fatalf("Publish with WithMaxRetries: %v", err)
+}
+if id == "" {
+t.Fatal("expected non-empty message ID")
+}
+}
+
+func TestWithVisibilityTimeout(t *testing.T) {
+c := newTestEnv(t)
+
+if err := c.CreateNamespace(ctx(), "vt"); err != nil {
+t.Fatalf("CreateNamespace: %v", err)
+}
+if err := c.CreateQueue(ctx(), "vt", "jobs"); err != nil {
+t.Fatalf("CreateQueue: %v", err)
+}
+if _, err := c.Publish(ctx(), "vt", "jobs", []byte("body")); err != nil {
+t.Fatalf("Publish: %v", err)
+}
+
+msgs, err := c.Consume(ctx(), "vt", "jobs", 1,
+client.WithVisibilityTimeout(60*time.Second))
+if err != nil {
+t.Fatalf("Consume with WithVisibilityTimeout: %v", err)
+}
+if len(msgs) != 1 {
+t.Fatalf("expected 1 message, got %d", len(msgs))
+}
+}
+
+func TestWithQueueMaxMessages(t *testing.T) {
+c := newTestEnv(t)
+
+if err := c.CreateNamespace(ctx(), "maxmsg"); err != nil {
+t.Fatalf("CreateNamespace: %v", err)
+}
+err := c.CreateQueue(ctx(), "maxmsg", "capped",
+client.WithQueueMaxMessages(100))
+if err != nil {
+t.Fatalf("CreateQueue with WithQueueMaxMessages: %v", err)
+}
+}
+
+// ─── Attempt field in consumed messages ──────────────────────────────────────
+
+func TestConsume_AttemptFieldPopulated(t *testing.T) {
+c := newTestEnv(t)
+
+if err := c.CreateNamespace(ctx(), "atns"); err != nil {
+t.Fatalf("CreateNamespace: %v", err)
+}
+if err := c.CreateQueue(ctx(), "atns", "atq"); err != nil {
+t.Fatalf("CreateQueue: %v", err)
+}
+if _, err := c.Publish(ctx(), "atns", "atq", []byte("data")); err != nil {
+t.Fatalf("Publish: %v", err)
+}
+
+msgs, err := c.Consume(ctx(), "atns", "atq", 1)
+if err != nil {
+t.Fatalf("Consume: %v", err)
+}
+if len(msgs) != 1 {
+t.Fatalf("expected 1 message, got %d", len(msgs))
+}
+if msgs[0].Attempt < 1 {
+t.Errorf("Attempt: want ≥1, got %d", msgs[0].Attempt)
+}
+}
+
+// ─── toMessage non-base64 body fallback ─────────────────────────────────────
+
+// TestConsume_NonBase64Body verifies the client gracefully handles a server
+// returning a raw (non-base64) body in the consume response.
+func TestConsume_NonBase64Body(t *testing.T) {
+rawBody := "raw-text-not-base64!@#"
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+w.Header().Set("Content-Type", "application/json")
+w.WriteHeader(http.StatusOK)
+resp := map[string]any{
+"messages": []map[string]any{
+{
+"id":             "01ABCDEFGHIJKLMNOPQRSTUVWX",
+"body":           rawBody,
+"receipt_handle": "rh-1",
+"namespace":      "ns",
+"queue":          "q",
+"attempt":        1,
+"published_at":   0,
+},
+},
+}
+_ = json.NewEncoder(w).Encode(resp)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+msgs, err := c.Consume(context.Background(), "ns", "q", 1)
+if err != nil {
+t.Fatalf("Consume: %v", err)
+}
+if len(msgs) != 1 {
+t.Fatalf("expected 1 message, got %d", len(msgs))
+}
+if string(msgs[0].Body) != rawBody {
+t.Errorf("body: want %q, got %q", rawBody, string(msgs[0].Body))
+}
+}
+
+// TestListQueues_ServerError verifies ListQueues propagates server errors.
+func TestListQueues_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"boom"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+if _, err := c.ListQueues(context.Background(), "ns"); err == nil {
+t.Fatal("expected error from ListQueues on 500, got nil")
+}
+}
+
+// TestPublishBatch_ServerError verifies PublishBatch propagates server errors.
+func TestPublishBatch_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"batch failed"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+if _, err := c.PublishBatch(context.Background(), "ns", "q", [][]byte{[]byte("body")}); err == nil {
+t.Fatal("expected error from PublishBatch on 500, got nil")
+}
+}
+
+// TestDrainDLQ_ServerError verifies DrainDLQ propagates server errors.
+func TestDrainDLQ_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"drain failed"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+if _, err := c.DrainDLQ(context.Background(), "ns", "q", 10); err == nil {
+t.Fatal("expected error from DrainDLQ on 500, got nil")
+}
+}
+
+// TestReplayDLQ_ServerError verifies ReplayDLQ propagates server errors.
+func TestReplayDLQ_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"replay failed"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+if _, err := c.ReplayDLQ(context.Background(), "ns", "q", 10); err == nil {
+t.Fatal("expected error from ReplayDLQ on 500, got nil")
+}
+}
+
+// ─── Error path coverage (mock servers returning 500) ─────────────────────────
+
+// TestPublish_ServerError verifies that Publish propagates server errors.
+func TestPublish_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+_, err := c.Publish(context.Background(), "ns", "q", []byte("body"))
+if err == nil {
+t.Fatal("expected error from Publish on 500, got nil")
+}
+}
+
+// TestPublishBatch_WithOptions verifies that the opts loop in PublishBatch
+// executes when PublishOptions are supplied (covers the loop body).
+func TestPublishBatch_WithOptions(t *testing.T) {
+c := newTestEnv(t)
+if err := c.CreateQueue(context.Background(), "ns", "batch-opts-q"); err != nil {
+t.Fatalf("CreateQueue: %v", err)
+}
+ids, err := c.PublishBatch(context.Background(), "ns", "batch-opts-q",
+[][]byte{[]byte("msg1"), []byte("msg2")},
+client.WithDeliverAt(time.Now().Add(10*time.Second)),
+)
+if err != nil {
+t.Fatalf("PublishBatch with opts: %v", err)
+}
+if len(ids) != 2 {
+t.Errorf("PublishBatch with opts: want 2 IDs, got %d", len(ids))
+}
+}
+
+// TestConsume_ServerError verifies that Consume propagates server errors.
+func TestConsume_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+_, err := c.Consume(context.Background(), "ns", "q", 1)
+if err == nil {
+t.Fatal("expected error from Consume on 500, got nil")
+}
+}
+
+// TestListNamespaces_ServerError verifies that ListNamespaces propagates 500.
+func TestListNamespaces_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+_, err := c.ListNamespaces(context.Background())
+if err == nil {
+t.Fatal("expected error from ListNamespaces on 500, got nil")
+}
+}
+
+// TestSubscribe_ServerError verifies that Subscribe propagates server errors.
+func TestSubscribe_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+_, err := c.Subscribe(context.Background(), "ns", "q", "http://example.com/hook", "")
+if err == nil {
+t.Fatal("expected error from Subscribe on 500, got nil")
+}
+}
+
+// TestStats_ServerError verifies that Stats propagates server errors.
+func TestStats_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+_, err := c.Stats(context.Background())
+if err == nil {
+t.Fatal("expected error from Stats on 500, got nil")
+}
+}
+
+// TestStatsPaged_ServerError verifies that StatsPaged propagates server errors.
+func TestStatsPaged_ServerError(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+_, _, err := c.StatsPaged(context.Background(), 1, 10)
+if err == nil {
+t.Fatal("expected error from StatsPaged on 500, got nil")
+}
+}
+
+// TestDo_InvalidJSONResponse verifies that the `do` method returns a JSON
+// decode error when the server sends 200 with non-JSON body.
+func TestDo_InvalidJSONResponse(t *testing.T) {
+srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+w.Header().Set("Content-Type", "application/json")
+w.WriteHeader(http.StatusOK)
+_, _ = w.Write([]byte("not valid json{{{"))
+}))
+t.Cleanup(srv.Close)
+
+c := client.New(srv.URL)
+// Stats decodes a JSON array — invalid body must cause a decode error.
+_, err := c.Stats(context.Background())
+if err == nil {
+t.Fatal("expected JSON decode error from invalid response body, got nil")
+}
+}
