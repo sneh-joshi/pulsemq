@@ -291,3 +291,17 @@ func TestManager_AllStats_IncludesScheduled(t *testing.T) {
 		t.Errorf("Scheduled: want 1, got %d", snap.Scheduled)
 	}
 }
+
+// ─── IsDLQ ───────────────────────────────────────────────────────────────────
+
+func TestIsDLQ(t *testing.T) {
+	if !queue.IsDLQ(queue.DLQName("orders")) {
+		t.Error("IsDLQ: DLQName(orders) should return true")
+	}
+	if queue.IsDLQ("orders") {
+		t.Error("IsDLQ: 'orders' should return false")
+	}
+	if queue.IsDLQ("") {
+		t.Error("IsDLQ: empty string should return false")
+	}
+}

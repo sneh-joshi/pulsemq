@@ -196,3 +196,26 @@ func TestRegistry_ConcurrentInc(t *testing.T) {
 		t.Fatalf("concurrent Inc: got %d, want 100", got)
 	}
 }
+
+// ─── splitTwo tests ───────────────────────────────────────────────────────────
+
+func TestSplitTwo_WithTab(t *testing.T) {
+key := metrics.QueueKey("payments", "orders")
+if key != "payments\torders" {
+t.Errorf("QueueKey: want %q, got %q", "payments\torders", key)
+}
+}
+
+func TestSplitTwo_MetricsCountByQueue(t *testing.T) {
+var reg metrics.Registry
+reg.Published.Inc(metrics.QueueKey("ns", "q"))
+reg.Published.Inc(metrics.QueueKey("ns", "q"))
+
+var total int64
+reg.Published.Each(func(k string, v int64) {
+total += v
+})
+if total != 2 {
+t.Errorf("want 2 published, got %d", total)
+}
+}

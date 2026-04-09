@@ -9,8 +9,16 @@ PulseMQ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.0.1] — 2026-04-09
+
+### Fixed
+- **Queue restart bug**: In-flight messages restored after a server restart now correctly preserve `MaxRetries`. Previously, `MaxRetries` defaulted to `0` after restart, causing messages to be retried indefinitely instead of being routed to the DLQ after the configured retry count was exhausted.
+- **Consume response**: The `attempt` field in consume (`GET .../messages`) responses was always `0`. It now correctly reflects the current delivery attempt number.
+
 ### Added
-- Nothing yet.
+- Test coverage increased from 86.7% → 89.7% across all packages (broker, config, consumer, dlq, metrics, namespace, node, queue, scheduler, storage/local, HTTP handlers, WebSocket, types, client).
 
 ---
 

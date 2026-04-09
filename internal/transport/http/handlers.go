@@ -589,6 +589,7 @@ func mapDequeueResults(results []*queue.DequeueResult) []consumedMessage {
 			m.Body = base64.StdEncoding.EncodeToString(r.Message.Body)
 			m.Namespace = r.Message.Namespace
 			m.Queue = r.Message.Queue
+			m.Attempt = r.Message.Attempt
 			m.PublishedAt = r.Message.PublishedAt
 			m.Metadata = r.Message.Metadata
 		}

@@ -208,3 +208,56 @@ func TestValidateName(t *testing.T) {
 		}
 	}
 }
+
+// TestNew_MkdirFailure verifies that New returns an error when the data
+// directory cannot be created (parent is a file, not a directory).
+func TestNew_MkdirFailure(t *testing.T) {
+// Create a regular file at the target path to block MkdirAll.
+parent := t.TempDir()
+blockPath := filepath.Join(parent, "block")
+if err := os.WriteFile(blockPath, []byte("x"), 0o644); err != nil {
+t.Fatalf("WriteFile: %v", err)
+}
+// Attempt to use a child of that file as dataDir — MkdirAll must fail.
+	_, err := namespace.New(filepath.Join(blockPath, "child"))
+	if err == nil {
+		t.Fatal("expected error when dataDir cannot be created, got nil")
+	}
+}
+
+// TestNamespace_Load_InvalidJSON verifies that New returns an error when
+// namespaces.json exists but contains invalid JSON.
+func TestNamespace_Load_InvalidJSON(t *testing.T) {
+	dir := tempDir(t)
+	// Write garbage to the persistence file.
+	if err := os.WriteFile(filepath.Join(dir, "namespaces.json"), []byte("not-json"), 0o640); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	_, err := namespace.New(dir)
+	if err == nil {
+		t.Fatal("expected error loading invalid JSON, got nil")
+	}
+}
+
+// TestNamespace_Save_WriteError verifies that Create returns an error when the
+// backing file cannot be written (e.g. the directory is read-only).
+func TestNamespace_Save_WriteError(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("root can write to read-only dirs")
+	}
+	dir := tempDir(t)
+	r, err := namespace.New(dir)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	// Make the directory read-only so WriteFile fails.
+	if err := os.Chmod(dir, 0o444); err != nil {
+		t.Fatalf("Chmod: %v", err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o750) }) //nolint:errcheck
+
+	if err := r.Create("newns"); err == nil {
+		t.Fatal("expected error writing to read-only dir, got nil")
+	}
+}

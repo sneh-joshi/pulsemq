@@ -168,3 +168,85 @@ func TestDLQ_Replay_EmptyDLQ(t *testing.T) {
 		t.Errorf("replayed=%d, want 0", n)
 	}
 }
+
+// TestDLQ_Replay_PrimaryNotFound verifies error when primary queue missing.
+func TestDLQ_Replay_PrimaryNotFound(t *testing.T) {
+mgr := queue.NewManager(newFactory(t.TempDir()), nil, queue.DefaultConfig())
+t.Cleanup(func() { _ = mgr.Close() })
+
+dm := dlq.NewManager(mgr)
+// No queue created — both primary and DLQ are absent.
+_, err := dm.Replay("ns", "ghost-queue", 10)
+if err == nil {
+t.Fatal("expected error when primary queue not found, got nil")
+}
+}
+
+
+// TestDLQ_Drain_DLQNotFound verifies error when neither primary nor DLQ exists.
+func TestDLQ_Drain_DLQNotFound(t *testing.T) {
+mgr := queue.NewManager(newFactory(t.TempDir()), nil, queue.DefaultConfig())
+t.Cleanup(func() { _ = mgr.Close() })
+
+dm := dlq.NewManager(mgr)
+// Neither primary nor DLQ exists — Drain should return an error.
+_, err := dm.Drain("ns", "no-such-queue", 10)
+if err == nil {
+t.Fatal("expected error when DLQ not found, got nil")
+}
+}
+
+// TestDLQ_Replay_PublishFailure verifies that Replay skips messages whose
+// re-publish to the primary queue fails (primary is at capacity).
+func TestDLQ_Replay_PublishFailure(t *testing.T) {
+	// Use a primary queue with capacity 1 so it fills up immediately.
+	primaryCfg := queue.DefaultConfig()
+	primaryCfg.MaxMessages = 1
+
+	mgr := queue.NewManager(newFactory(t.TempDir()), nil, queue.DefaultConfig())
+	t.Cleanup(func() { _ = mgr.Close() })
+
+	dm := dlq.NewManager(mgr)
+
+	// Create primary with MaxMessages=1.
+	primaryQueue, err := mgr.Create("ns", "orders", primaryCfg)
+	if err != nil {
+		t.Fatalf("Create primary: %v", err)
+	}
+
+	// Dead-letter a message using MaxRetries=1.
+	msg := &queue.Message{
+		ID:         node.MustNewID(),
+		Namespace:  "ns",
+		Queue:      "orders",
+		Body:       []byte("will-die"),
+		MaxRetries: 1,
+	}
+	exhaustRetries(t, primaryQueue, msg)
+
+	// Confirm the message landed in the DLQ.
+	if dm.Len("ns", "orders") != 1 {
+		t.Fatalf("DLQ Len after dead-letter: want 1, got %d", dm.Len("ns", "orders"))
+	}
+
+	// Fill the primary queue so Publish fails during Replay.
+	filler := &queue.Message{
+		ID:         node.MustNewID(),
+		Namespace:  "ns",
+		Queue:      "orders",
+		Body:       []byte("filler"),
+		MaxRetries: 1,
+	}
+	if err := primaryQueue.Publish(filler); err != nil {
+		t.Fatalf("Publish filler: %v", err)
+	}
+
+	// Replay must return 0 replayed (Publish fails, message left in-flight on DLQ).
+	n, err := dm.Replay("ns", "orders", 10)
+	if err != nil {
+		t.Fatalf("Replay: unexpected error: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("Replay: want 0 replayed (primary full), got %d", n)
+	}
+}

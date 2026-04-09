@@ -241,3 +241,18 @@ func TestWAL_SeqIncrements(t *testing.T) {
 		prevSeq = seq
 	}
 }
+
+// TestWAL_Path verifies that Path returns the path used to open the WAL.
+func TestWAL_Path(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "wal.dat")
+	w, err := local.OpenWAL(path)
+	if err != nil {
+		t.Fatalf("OpenWAL: %v", err)
+	}
+	defer w.Close()
+
+	if got := w.Path(); got != path {
+		t.Errorf("Path(): want %q, got %q", path, got)
+	}
+}
