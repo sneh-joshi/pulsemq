@@ -1,12 +1,12 @@
 module github.com/sneh-joshi/pulsemq
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/oklog/ulid/v2 v2.1.2
 	go.etcd.io/bbolt v1.5.0
-	golang.org/x/time v0.15.0
+	golang.org/x/time v0.16.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
